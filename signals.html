@@ -61,6 +61,8 @@
     position: absolute; left: 0; top: 0; height: 100%; width: 0; background: var(--fill);
   }
 
+  .seq-mnav { display: none; }   /* mobile-only; hidden on desktop */
+
   /* RIGHT: animation */
   .seq-right {
     flex: 1 1 60%;
@@ -72,28 +74,26 @@
   }
   .seq-lottie { width: 100%; height: 100%; }
 
-  /* ---- MOBILE: stack heading, then animation, then items (Attio-style) ---- */
+  /* ---- MOBILE: heading, then animation, then Attio-style bar row + active text ---- */
   @media (max-width: 860px) {
     .seq-shell { min-height: 0; }
-    .seq-inner {
-      flex-direction: column;
-      max-width: 540px;
-      padding: 56px 24px 64px;
-    }
-    /* dissolve the left wrapper so heading + items become direct children,
-       letting the animation sit between them via order */
-    .seq-left { display: contents; }
-    .seq-heading {
-      order: 1; text-align: center;
-      margin: 0 auto 4px; max-width: 20ch;
-      font-size: 32px;
-    }
-    .seq-right { order: 2; width: 100%; margin: 8px 0 4px; }
+    .seq-inner { flex-direction: column; max-width: 540px; padding: 56px 24px 64px; }
+    .seq-left { display: contents; }                 /* promote children so animation can sit between */
+    .seq-heading { order: 1; text-align: center; margin: 0 auto 4px; max-width: 20ch; font-size: 32px; }
+    .seq-right { order: 2; width: 100%; margin: 12px 0; }
     .seq-stage { width: 100%; max-height: 58vh; }
-    .seq-items { order: 3; align-items: center; text-align: center; gap: 22px; }
-    .item-head { font-size: 20px; text-align: center; }
-    .item-sub { font-size: 16px; margin-left: auto; margin-right: auto; max-width: 40ch; }
-    .item-progress { max-width: 320px; margin-left: auto; margin-right: auto; }
+
+    .seq-items { display: none; }                    /* desktop accordion hidden on mobile */
+
+    .seq-mnav { display: block; order: 3; text-align: center; margin-top: 6px; }
+    .mbars { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; }
+    .mbar {
+      flex: 1 1 0; max-width: 110px; height: 2px; padding: 0; border: none;
+      background: var(--track); border-radius: 2px; position: relative; cursor: pointer;
+    }
+    .mfill { position: absolute; left: 0; top: 0; height: 100%; width: 0; background: var(--fill); border-radius: 2px; }
+    .mtitle { margin: 0 0 10px; font-size: 20px; font-weight: 500; color: var(--head-active); }
+    .msub { margin: 0 auto; font-size: 16px; line-height: 1.55; color: var(--sub); max-width: 40ch; }
   }
 </style>
 </head>
@@ -126,6 +126,16 @@
           </div>
         </div>
       </div>
+
+      <div class="seq-mnav">
+        <div class="mbars">
+          <button class="mbar" data-index="0"><span class="mfill"></span></button>
+          <button class="mbar" data-index="1"><span class="mfill"></span></button>
+          <button class="mbar" data-index="2"><span class="mfill"></span></button>
+        </div>
+        <h3 class="mtitle"></h3>
+        <p class="msub"></p>
+      </div>
     </div>
 
     <div class="seq-right">
@@ -151,6 +161,13 @@
   var N = CONFIG.segments.length;
   var mount = document.getElementById("seqLottie");
   var items = Array.prototype.slice.call(document.querySelectorAll(".seq-item"));
+  var mfills = Array.prototype.slice.call(document.querySelectorAll(".mfill"));
+  var mbars  = Array.prototype.slice.call(document.querySelectorAll(".mbar"));
+  var mtitle = document.querySelector(".mtitle");
+  var msub   = document.querySelector(".msub");
+  var TEXTS  = items.map(function (el) {
+    return { t: el.querySelector(".item-head").textContent, s: el.querySelector(".item-sub").textContent };
+  });
   var LOOP_END = CONFIG.segments[N - 1].end;
   var anim = null, mode = "auto", targetSeg = null, lockHi = false, lastHi = -1;
 
@@ -165,15 +182,27 @@
     var el = document.querySelector(".seq-item.is-active .bar-fill");
     if (el) el.style.width = (Math.max(0, Math.min(1, pct)) * 100) + "%";
   }
+  function setMobileText(i) {
+    if (mtitle) mtitle.textContent = TEXTS[i].t;
+    if (msub) msub.textContent = TEXTS[i].s;
+  }
+  function setMobileBars(hi, pct) {
+    for (var i = 0; i < mfills.length; i++) {
+      var w = i < hi ? 1 : (i === hi ? pct : 0);   // past = full, current = filling, future = empty
+      mfills[i].style.width = (Math.max(0, Math.min(1, w)) * 100) + "%";
+    }
+  }
   function onFrame() {
     var f = anim.currentFrame;
     if (mode === "ff" && f >= CONFIG.segments[targetSeg].start) {
       mode = "auto"; anim.setSpeed(1); lockHi = false; targetSeg = null;
     }
     var hi = lockHi ? targetSeg : segAt(f);
-    if (hi !== lastHi) { highlight(hi); lastHi = hi; }
+    if (hi !== lastHi) { highlight(hi); setMobileText(hi); lastHi = hi; }
     var s = CONFIG.segments[hi];
-    setBar((f - s.start) / (s.end - s.start));
+    var pct = (f - s.start) / (s.end - s.start);
+    setBar(pct);
+    setMobileBars(hi, pct);
   }
   function playLoop() { anim.setSpeed(1); anim.playSegments([0, LOOP_END], true); }
 
@@ -191,6 +220,9 @@
   items.forEach(function (el) {
     el.addEventListener("click", function () { clickTo(parseInt(el.getAttribute("data-index"), 10)); });
   });
+  mbars.forEach(function (el) {
+    el.addEventListener("click", function () { clickTo(parseInt(el.getAttribute("data-index"), 10)); });
+  });
 
   anim = lottie.loadAnimation({
     container: mount,
@@ -198,7 +230,7 @@
     loop: false, autoplay: false,
     animationData: window.__ANIM__
   });
-  anim.addEventListener("DOMLoaded", function () { highlight(0); playLoop(); });
+  anim.addEventListener("DOMLoaded", function () { highlight(0); setMobileText(0); playLoop(); });
   anim.addEventListener("enterFrame", onFrame);
   anim.addEventListener("complete", function () { playLoop(); });
   anim.addEventListener("data_failed", function () { console.error("Lottie failed to load"); });
