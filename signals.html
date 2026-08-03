@@ -177,10 +177,9 @@
 
   anim = lottie.loadAnimation({
     container: mount,
-    renderer: "canvas",                                  // canvas = no SVG IDs, so track mattes can't collide
+    renderer: "svg",
     loop: false, autoplay: false,
-    animationData: window.__ANIM__,
-    rendererSettings: { clearCanvas: true, dpr: (window.devicePixelRatio || 1) }
+    animationData: window.__ANIM__
   });
   anim.addEventListener("DOMLoaded", function () { highlight(0); playLoop(); });
   anim.addEventListener("enterFrame", onFrame);
