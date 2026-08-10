@@ -68,11 +68,17 @@
     flex: 1 1 60%;
     display: flex; align-items: center; justify-content: center; min-width: 0;
   }
-  .seq-stage {
+  .seq-animation-wrap {
     position: relative; width: 100%; aspect-ratio: 1300 / 1330; max-height: 88vh;
     display: flex; align-items: center; justify-content: center;
+    overflow: visible;
   }
-  .seq-lottie { width: 100%; height: 100%; }
+  .seq-stage {
+    position: relative; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 0;
+  }
+  .seq-lottie { width: 100%; height: 100%; position: relative; z-index: 0; }
   .seq-lottie svg { shape-rendering: geometricPrecision; }
 
   /* ---- MOBILE: heading, then animation, then Attio-style bar row + active text ---- */
@@ -82,13 +88,40 @@
     .seq-left { display: contents; }                 /* promote children so animation can sit between */
     .seq-heading { order: 1; text-align: center; margin: 0 auto 4px; max-width: 20ch; font-size: 32px; }
     .seq-right { order: 2; width: 100%; margin: 12px 0; }
-    .seq-stage {
+    .seq-animation-wrap {
+      position: relative;
       width: 100%;
-      max-height: 62vh;
-      overflow: visible;
+      max-height: 58vh;
+      overflow: hidden;
+      background: #0D0C1D;
+      isolation: isolate;
     }
+
+    /* Mobile foreground mask: sits above the animation without changing layout. */
+    .seq-animation-wrap::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 18%;
+      background: #0D0C1D;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .seq-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      z-index: 0;
+    }
+
     .seq-lottie {
-      transform: scale(3);
+      position: relative;
+      z-index: 0;
+      transform: scale(2.2);
       transform-origin: center center;
       will-change: transform;
     }
@@ -149,7 +182,11 @@
     </div>
 
     <div class="seq-right">
-      <div class="seq-stage"><div class="seq-lottie" id="seqLottie"></div></div>
+      <div class="seq-animation-wrap">
+        <div class="seq-stage">
+          <div class="seq-lottie" id="seqLottie"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
