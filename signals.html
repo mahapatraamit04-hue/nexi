@@ -84,37 +84,142 @@
   /* ---- MOBILE: heading, then animation, then Attio-style bar row + active text ---- */
   @media (max-width: 860px) {
     .seq-shell { min-height: 0; }
-    .seq-inner { flex-direction: column; max-width: 540px; padding: 56px 24px 64px; }
-    .seq-left { display: contents; }                 /* promote children so animation can sit between */
-    .seq-heading { order: 1; text-align: center; margin: 0 auto 4px; max-width: 20ch; font-size: 32px; }
-    .seq-right { order: 2; width: 100%; margin: 12px 0; }
-    .seq-animation-wrap {
+    .seq-inner {
+      flex-direction: column;
+      max-width: 540px;
+      padding: 56px 24px 64px;
       width: 100%;
-      max-height: 65vh;
-      overflow: visible;
+      background: #0D0C1D;
     }
+
+    .seq-left {
+      display: contents;
+    }
+
+    .seq-heading {
+      order: 1;
+      text-align: center;
+      margin: 0 auto 4px;
+      max-width: 20ch;
+      font-size: 32px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .seq-right {
+      order: 2;
+      width: 100%;
+      margin: 12px 0 0;
+      position: relative;
+      z-index: 0;
+    }
+
+    .seq-animation-wrap {
+      position: relative;
+      width: 100%;
+      max-height: 58vh;
+      overflow: visible;
+      background: #0D0C1D;
+      z-index: 0;
+    }
+
     .seq-stage {
+      position: relative;
       width: 100%;
       height: 100%;
-      overflow: hidden;
+      overflow: visible;
+      z-index: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
     .seq-lottie {
-      transform: scale(2.5);
+      position: relative;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      transform: scale(2.2);
       transform-origin: center center;
       will-change: transform;
     }
 
-    .seq-items { display: none; }                    /* desktop accordion hidden on mobile */
-
-    .seq-mnav { display: block; order: 3; text-align: center; margin-top: 6px; }
-    .mbars { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; }
-    .mbar {
-      flex: 1 1 0; max-width: 110px; height: 2px; padding: 0; border: none;
-      background: var(--track); border-radius: 2px; position: relative; cursor: pointer;
+    .seq-items {
+      display: none;
     }
-    .mfill { position: absolute; left: 0; top: 0; height: 100%; width: 0; background: var(--fill); border-radius: 2px; }
-    .mtitle { margin: 0 0 10px; font-size: 20px; font-weight: 500; color: var(--head-active); }
-    .msub { margin: 0 auto; font-size: 16px; line-height: 1.55; color: var(--sub); max-width: 40ch; }
+
+    /* Mobile progress/content stays in normal flow directly below the animation. */
+    .seq-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin: 12px 0 0;
+    }
+
+    .seq-animation-wrap {
+      width: 100%;
+      max-height: 58vh;
+      overflow: visible;
+      margin-bottom: 60%;
+    }
+
+    .seq-mnav {
+      display: block;
+      position: relative;
+      width: 100%;
+      align-self: stretch;
+      text-align: center;
+      margin: 0;
+      padding: 14px 24px 22px;
+      background: #0D0C1D;
+      z-index: 1;
+      box-sizing: border-box;
+    }
+
+    .mbars {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .mbar {
+      flex: 1 1 0;
+      max-width: 110px;
+      height: 2px;
+      padding: 0;
+      border: none;
+      background: var(--track);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .mfill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0;
+      background: var(--fill);
+      border-radius: 2px;
+    }
+
+    .mtitle {
+      margin: 0 0 10px;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--head-active);
+    }
+
+    .msub {
+      margin: 0 auto;
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--sub);
+      max-width: 40ch;
+    }
   }
 </style>
 </head>
@@ -148,6 +253,16 @@
         </div>
       </div>
 
+    </div>
+
+    <div class="seq-right">
+      <div class="seq-animation-wrap">
+        <div class="seq-stage">
+          <div class="seq-lottie" id="seqLottie"></div>
+        </div>
+      </div>
+
+      <!-- Mobile content overlay: sits above the animation and covers any export watermark/logo. -->
       <div class="seq-mnav">
         <div class="mbars">
           <button class="mbar" data-index="0"><span class="mfill"></span></button>
@@ -156,14 +271,6 @@
         </div>
         <h3 class="mtitle"></h3>
         <p class="msub"></p>
-      </div>
-    </div>
-
-    <div class="seq-right">
-      <div class="seq-animation-wrap">
-        <div class="seq-stage">
-          <div class="seq-lottie" id="seqLottie"></div>
-        </div>
       </div>
     </div>
   </div>
