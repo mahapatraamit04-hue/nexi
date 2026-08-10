@@ -238,16 +238,45 @@
     el.addEventListener("click", function () { clickTo(parseInt(el.getAttribute("data-index"), 10)); });
   });
 
-  anim = lottie.loadAnimation({
-    container: mount,
-    renderer: "svg",
-    loop: false, autoplay: false,
-    animationData: window.__ANIM__
-  });
-  anim.addEventListener("DOMLoaded", function () { highlight(0); setMobileText(0); playLoop(); });
-  anim.addEventListener("enterFrame", onFrame);
-  anim.addEventListener("complete", function () { playLoop(); });
-  anim.addEventListener("data_failed", function () { console.error("Lottie failed to load"); });
+  // Desktop uses the embedded animation. Mobile uses the Webflow-hosted animation file.
+  var MOBILE_ANIM_URL = "https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a7971ca990004e5de2a7b0c_1300-2%20(11).json";
+  var isMobile = window.matchMedia("(max-width: 860px)").matches;
+
+  function initAnimation(animationData) {
+    anim = lottie.loadAnimation({
+      container: mount,
+      renderer: "svg",
+      loop: false, autoplay: false,
+      animationData: animationData
+    });
+
+    anim.addEventListener("DOMLoaded", function () {
+      highlight(0);
+      setMobileText(0);
+      playLoop();
+    });
+    anim.addEventListener("enterFrame", onFrame);
+    anim.addEventListener("complete", function () { playLoop(); });
+    anim.addEventListener("data_failed", function () { console.error("Lottie failed to load"); });
+  }
+
+  if (isMobile) {
+    fetch(MOBILE_ANIM_URL)
+      .then(function (response) {
+        if (!response.ok) throw new Error("Mobile animation failed to load: " + response.status);
+        return response.json();
+      })
+      .then(function (data) {
+        initAnimation(data);
+      })
+      .catch(function (error) {
+        console.error(error);
+        // Fall back to the embedded animation if the mobile asset cannot be fetched.
+        initAnimation(window.__ANIM__);
+      });
+  } else {
+    initAnimation(window.__ANIM__);
+  }
 })();
 </script>
 </body>
