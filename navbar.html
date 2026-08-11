@@ -15,11 +15,16 @@
 
   <style>
 
+    /* =========================================================
+       ROOT
+    ========================================================= */
+
     :root {
       --nav-h: 72px;
+      --mobile-nav-h: 64px;
+
       --maxw: 1500px;
 
-      --navy: #0d0c1d;
       --ink: #0d0c1d;
       --paper: #ffffff;
     }
@@ -39,9 +44,10 @@
     html,
     body {
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       margin: 0;
       padding: 0;
+
       background: transparent;
     }
 
@@ -55,6 +61,8 @@
         Helvetica,
         Arial,
         sans-serif;
+
+      overflow-x: hidden;
     }
 
 
@@ -63,24 +71,16 @@
     ========================================================= */
 
     .nav {
+
       position: fixed;
 
-      /*
-        2% viewport-height spacing
-        from browser top edge
-      */
       top: 2vh;
-
       left: 50%;
 
       transform: translateX(-50%);
 
-      /*
-        Maximum width = 1500px
-        with breathing room on smaller screens
-      */
       width: calc(100% - 4vw);
-      max-width: 1500px;
+      max-width: var(--maxw);
 
       height: var(--nav-h);
 
@@ -101,6 +101,7 @@
     ========================================================= */
 
     .nav__inner {
+
       width: 100%;
       height: 100%;
 
@@ -117,6 +118,7 @@
     ========================================================= */
 
     .nav__logo {
+
       position: relative;
 
       display: block;
@@ -130,6 +132,7 @@
 
 
     .nav__logo img {
+
       height: 28px;
       width: auto;
 
@@ -141,20 +144,24 @@
       left: 0;
 
       /*
-        No transition.
-        Theme changes immediately.
+        IMPORTANT:
+        No transition on theme change.
       */
+
       transition: none;
     }
 
 
     .nav__logo img[data-for="light"] {
+
       position: relative;
+
       opacity: 1;
     }
 
 
     .nav__logo img[data-for="dark"] {
+
       opacity: 0;
     }
 
@@ -164,7 +171,9 @@
     ========================================================= */
 
     .nav__links {
+
       display: flex;
+
       align-items: center;
 
       gap: 36px;
@@ -180,6 +189,7 @@
 
 
     .nav__links a {
+
       font-family: "Switzer", sans-serif;
 
       font-size: 15px;
@@ -201,15 +211,17 @@
 
 
     .nav__links a:hover {
+
       opacity: 1;
     }
 
 
     /* =========================================================
-       MOBILE MENU BUTTON
+       MOBILE BUTTON
     ========================================================= */
 
     .nav__menu-button {
+
       display: none;
 
       width: 40px;
@@ -231,6 +243,7 @@
 
 
     .nav__menu-icon {
+
       position: relative;
 
       width: 22px;
@@ -239,6 +252,7 @@
 
 
     .nav__menu-icon span {
+
       position: absolute;
 
       left: 0;
@@ -255,16 +269,19 @@
 
 
     .nav__menu-icon span:nth-child(1) {
+
       top: 2px;
     }
 
 
     .nav__menu-icon span:nth-child(2) {
+
       top: 8px;
     }
 
 
     .nav__menu-icon span:nth-child(3) {
+
       top: 14px;
     }
 
@@ -274,17 +291,18 @@
     ========================================================= */
 
     .nav__mobile-menu {
+
       display: none;
 
       position: fixed;
 
-      top: var(--nav-h);
+      top: var(--mobile-nav-h);
 
       left: 0;
 
       width: 100%;
 
-      padding: 24px 32px 32px;
+      padding: 24px 20px 32px;
 
       background: transparent;
 
@@ -307,6 +325,7 @@
 
 
     .nav__mobile-links {
+
       display: flex;
 
       flex-direction: column;
@@ -318,6 +337,7 @@
 
 
     .nav__mobile-links a {
+
       font-family: "Switzer", sans-serif;
 
       font-size: 18px;
@@ -333,10 +353,11 @@
 
 
     /* =========================================================
-       MOBILE MENU OPEN
+       MOBILE OPEN
     ========================================================= */
 
     .nav.menu-open .nav__mobile-menu {
+
       opacity: 1;
 
       visibility: visible;
@@ -350,6 +371,7 @@
     .nav.menu-open
     .nav__menu-icon
     span:nth-child(1) {
+
       transform:
         translateY(6px)
         rotate(45deg);
@@ -359,6 +381,7 @@
     .nav.menu-open
     .nav__menu-icon
     span:nth-child(2) {
+
       opacity: 0;
     }
 
@@ -366,6 +389,7 @@
     .nav.menu-open
     .nav__menu-icon
     span:nth-child(3) {
+
       transform:
         translateY(-6px)
         rotate(-45deg);
@@ -376,13 +400,9 @@
        DARK THEME
     ========================================================= */
 
-    .nav[data-theme="dark"] {
-      background: transparent;
-    }
-
-
     .nav[data-theme="dark"]
     .nav__links a {
+
       color: #ffffff;
     }
 
@@ -390,6 +410,7 @@
     .nav[data-theme="dark"]
     .nav__logo
     img[data-for="light"] {
+
       opacity: 0;
     }
 
@@ -397,101 +418,109 @@
     .nav[data-theme="dark"]
     .nav__logo
     img[data-for="dark"] {
+
       opacity: 1;
     }
 
 
     .nav[data-theme="dark"]
     .nav__menu-icon span {
+
       background: #ffffff;
     }
 
 
     .nav[data-theme="dark"]
     .nav__mobile-links a {
+
       color: #ffffff;
     }
 
 
     /* =========================================================
-       MOBILE
+       MOBILE MODE
+       
+       IMPORTANT:
+       This is controlled by JS using .is-mobile.
+       This avoids iframe/mobile viewport issues.
     ========================================================= */
 
-    @media (max-width: 767px) {
+    .nav.is-mobile {
 
-      .nav {
-        /*
-          Keep the same 2vh top spacing
-        */
-        top: 2vh;
+      width: calc(100% - 32px);
 
-        /*
-          Mobile side breathing room
-        */
-        width: calc(100% - 32px);
-
-        height: 64px;
-      }
-
-
-      .nav__inner {
-        padding: 0 20px;
-      }
-
-
-      .nav__logo {
-        height: 26px;
-      }
-
-
-      .nav__logo img {
-        height: 26px;
-      }
-
-
-      /*
-        Hide desktop navigation
-      */
-
-      .nav__links {
-        display: none;
-      }
-
-
-      /*
-        Show hamburger
-      */
-
-      .nav__menu-button {
-        display: flex;
-      }
-
-
-      /*
-        Mobile dropdown
-      */
-
-      .nav__mobile-menu {
-        display: block;
-
-        /*
-          Position directly below
-          the floating navbar
-        */
-
-        top: 64px;
-
-        left: 0;
-
-        width: 100%;
-
-        padding:
-          24px
-          20px
-          32px;
-      }
-
+      height: var(--mobile-nav-h);
     }
+
+
+    .nav.is-mobile .nav__inner {
+
+      padding: 0 20px;
+    }
+
+
+    .nav.is-mobile .nav__logo {
+
+      height: 26px;
+    }
+
+
+    .nav.is-mobile .nav__logo img {
+
+      height: 26px;
+    }
+
+
+    .nav.is-mobile .nav__links {
+
+      display: none;
+    }
+
+
+    .nav.is-mobile .nav__menu-button {
+
+      display: flex;
+    }
+
+
+    .nav.is-mobile .nav__mobile-menu {
+
+      display: block;
+    }
+
+
+    /* =========================================================
+       MOBILE DARK MENU
+    ========================================================= */
+
+    .nav.is-mobile[data-theme="dark"]
+    .nav__mobile-links a {
+
+      color: #ffffff;
+    }
+
+
+    /* =========================================================
+       DESKTOP MODE
+    ========================================================= */
+
+    .nav.is-desktop .nav__links {
+
+      display: flex;
+    }
+
+
+    .nav.is-desktop .nav__menu-button {
+
+      display: none;
+    }
+
+
+    .nav.is-desktop .nav__mobile-menu {
+
+      display: none;
+    }
+
 
   </style>
 
@@ -506,7 +535,7 @@
   ======================================================= -->
 
   <nav
-    class="nav"
+    class="nav is-desktop"
     data-theme="light"
   >
 
@@ -523,12 +552,16 @@
         aria-label="Nexigence Home"
       >
 
+        <!-- Dark logo -->
+
         <img
           data-for="light"
           src="https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/67723ef600ec83ca47fb9c71_Logo_Primary.svg"
           alt="Nexigence"
         >
 
+
+        <!-- White logo -->
 
         <img
           data-for="dark"
@@ -635,6 +668,7 @@
 
     (function () {
 
+
       const nav =
         document.querySelector('.nav');
 
@@ -652,6 +686,65 @@
 
 
       /* =====================================================
+         RESPONSIVE MODE
+         
+         We explicitly detect the iframe's
+         actual viewport width.
+
+         This is more reliable than relying
+         only on CSS media queries.
+      ===================================================== */
+
+      function updateResponsiveMode() {
+
+        const isMobile =
+          window.innerWidth <= 767;
+
+
+        nav.classList.toggle(
+          'is-mobile',
+          isMobile
+        );
+
+
+        nav.classList.toggle(
+          'is-desktop',
+          !isMobile
+        );
+
+
+        /*
+          If we return to desktop,
+          close the mobile menu.
+        */
+
+        if (!isMobile) {
+
+          closeMenu();
+
+        }
+
+      }
+
+
+      /* =====================================================
+         INITIAL RESPONSIVE MODE
+      ===================================================== */
+
+      updateResponsiveMode();
+
+
+      /* =====================================================
+         RESPONSIVE MODE ON RESIZE
+      ===================================================== */
+
+      window.addEventListener(
+        'resize',
+        updateResponsiveMode
+      );
+
+
+      /* =====================================================
          RECEIVE THEME FROM WEBFLOW
       ===================================================== */
 
@@ -666,7 +759,9 @@
             event.data.type !==
             'NEXIGENCE_NAV_THEME'
           ) {
+
             return;
+
           }
 
 
@@ -678,13 +773,14 @@
             theme !== 'light' &&
             theme !== 'dark'
           ) {
+
             return;
+
           }
 
 
           /*
-            Immediate theme change.
-            No color delay.
+            Theme changes immediately.
           */
 
           nav.setAttribute(
@@ -707,16 +803,20 @@
         );
 
 
-        menuButton.setAttribute(
-          'aria-expanded',
-          'false'
-        );
+        if (menuButton) {
+
+          menuButton.setAttribute(
+            'aria-expanded',
+            'false'
+          );
 
 
-        menuButton.setAttribute(
-          'aria-label',
-          'Open menu'
-        );
+          menuButton.setAttribute(
+            'aria-label',
+            'Open menu'
+          );
+
+        }
 
       }
 
@@ -751,6 +851,10 @@
       );
 
 
+      /* =====================================================
+         CLOSE AFTER CLICKING A LINK
+      ===================================================== */
+
       mobileLinks.forEach(
         function (link) {
 
@@ -762,21 +866,6 @@
         }
       );
 
-
-      window.addEventListener(
-        'resize',
-        function () {
-
-          if (
-            window.innerWidth > 767
-          ) {
-
-            closeMenu();
-
-          }
-
-        }
-      );
 
     })();
 
