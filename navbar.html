@@ -15,10 +15,6 @@
 
   <style>
 
-    /* =========================================================
-       ROOT
-    ========================================================= */
-
     :root {
       --nav-h: 72px;
       --maxw: 1500px;
@@ -29,10 +25,6 @@
     }
 
 
-    /* =========================================================
-       RESET
-    ========================================================= */
-
     * {
       box-sizing: border-box;
       margin: 0;
@@ -42,10 +34,11 @@
 
     html,
     body {
+      width: 100%;
+      height: 100%;
       margin: 0;
       padding: 0;
-      width: 100%;
-      min-height: 100%;
+      background: transparent;
     }
 
 
@@ -58,8 +51,6 @@
         Helvetica,
         Arial,
         sans-serif;
-
-      background: transparent;
     }
 
 
@@ -68,7 +59,6 @@
     ========================================================= */
 
     .nav {
-
       position: fixed;
 
       top: 0;
@@ -82,13 +72,6 @@
       display: flex;
       align-items: center;
 
-      /*
-        Transparent glass.
-
-        No white overlay.
-        No dark overlay.
-      */
-
       background: transparent;
 
       -webkit-backdrop-filter: blur(12px);
@@ -101,14 +84,12 @@
     ========================================================= */
 
     .nav__inner {
-
       width: 100%;
       max-width: var(--maxw);
 
       height: 100%;
 
       margin: 0 auto;
-
       padding: 0 32px;
 
       display: flex;
@@ -122,13 +103,11 @@
     ========================================================= */
 
     .nav__logo {
-
       position: relative;
 
       display: block;
 
       height: 28px;
-
       line-height: 0;
 
       flex-shrink: 0;
@@ -136,7 +115,6 @@
 
 
     .nav__logo img {
-
       height: 28px;
       width: auto;
 
@@ -148,8 +126,8 @@
       left: 0;
 
       /*
+        IMPORTANT:
         No transition.
-
         Theme changes immediately.
       */
 
@@ -160,9 +138,7 @@
     /* Dark logo */
 
     .nav__logo img[data-for="light"] {
-
       position: relative;
-
       opacity: 1;
     }
 
@@ -170,7 +146,6 @@
     /* White logo */
 
     .nav__logo img[data-for="dark"] {
-
       opacity: 0;
     }
 
@@ -180,9 +155,7 @@
     ========================================================= */
 
     .nav__links {
-
       display: flex;
-
       align-items: center;
 
       gap: 36px;
@@ -192,19 +165,15 @@
       position: absolute;
 
       left: 50%;
-
       transform: translateX(-50%);
     }
 
 
     .nav__links a {
-
       font-family: "Switzer", sans-serif;
 
       font-size: 15px;
-
       font-weight: 500;
-
       line-height: 1.2;
 
       letter-spacing: 0;
@@ -215,28 +184,20 @@
 
       opacity: .85;
 
-      /*
-        Only hover opacity animates.
-
-        Theme color switches instantly.
-      */
-
       transition: opacity .2s ease;
     }
 
 
     .nav__links a:hover {
-
       opacity: 1;
     }
 
 
     /* =========================================================
-       MOBILE MENU BUTTON
+       MOBILE BUTTON
     ========================================================= */
 
     .nav__menu-button {
-
       display: none;
 
       width: 40px;
@@ -245,21 +206,16 @@
       padding: 0;
 
       border: 0;
-
       background: transparent;
 
       cursor: pointer;
 
       align-items: center;
-
       justify-content: center;
-
-      flex-shrink: 0;
     }
 
 
     .nav__menu-icon {
-
       position: relative;
 
       width: 22px;
@@ -268,7 +224,6 @@
 
 
     .nav__menu-icon span {
-
       position: absolute;
 
       left: 0;
@@ -285,19 +240,16 @@
 
 
     .nav__menu-icon span:nth-child(1) {
-
       top: 2px;
     }
 
 
     .nav__menu-icon span:nth-child(2) {
-
       top: 8px;
     }
 
 
     .nav__menu-icon span:nth-child(3) {
-
       top: 14px;
     }
 
@@ -307,13 +259,11 @@
     ========================================================= */
 
     .nav__mobile-menu {
-
       display: none;
 
       position: fixed;
 
       top: var(--nav-h);
-
       left: 0;
 
       width: 100%;
@@ -326,9 +276,7 @@
       backdrop-filter: blur(12px);
 
       opacity: 0;
-
       visibility: hidden;
-
       pointer-events: none;
 
       transform: translateY(-8px);
@@ -341,9 +289,7 @@
 
 
     .nav__mobile-links {
-
       display: flex;
-
       flex-direction: column;
 
       gap: 24px;
@@ -353,13 +299,10 @@
 
 
     .nav__mobile-links a {
-
       font-family: "Switzer", sans-serif;
 
       font-size: 18px;
-
       font-weight: 500;
-
       line-height: 1.2;
 
       text-decoration: none;
@@ -369,15 +312,12 @@
 
 
     /* =========================================================
-       MOBILE MENU OPEN
+       MOBILE OPEN
     ========================================================= */
 
     .nav.menu-open .nav__mobile-menu {
-
       opacity: 1;
-
       visibility: visible;
-
       pointer-events: auto;
 
       transform: translateY(0);
@@ -387,7 +327,6 @@
     .nav.menu-open
     .nav__menu-icon
     span:nth-child(1) {
-
       transform:
         translateY(6px)
         rotate(45deg);
@@ -397,7 +336,6 @@
     .nav.menu-open
     .nav__menu-icon
     span:nth-child(2) {
-
       opacity: 0;
     }
 
@@ -405,7 +343,6 @@
     .nav.menu-open
     .nav__menu-icon
     span:nth-child(3) {
-
       transform:
         translateY(-6px)
         rotate(-45deg);
@@ -417,22 +354,19 @@
     ========================================================= */
 
     .nav[data-theme="dark"] {
-
       background: transparent;
     }
 
 
     .nav[data-theme="dark"]
     .nav__links a {
-
-      color: var(--paper);
+      color: #ffffff;
     }
 
 
     .nav[data-theme="dark"]
     .nav__logo
     img[data-for="light"] {
-
       opacity: 0;
     }
 
@@ -440,22 +374,19 @@
     .nav[data-theme="dark"]
     .nav__logo
     img[data-for="dark"] {
-
       opacity: 1;
     }
 
 
     .nav[data-theme="dark"]
     .nav__menu-icon span {
-
-      background: var(--paper);
+      background: #ffffff;
     }
 
 
     .nav[data-theme="dark"]
     .nav__mobile-links a {
-
-      color: var(--paper);
+      color: #ffffff;
     }
 
 
@@ -466,49 +397,36 @@
     @media (max-width: 767px) {
 
       .nav {
-
         height: 64px;
       }
 
 
       .nav__inner {
-
         padding: 0 20px;
       }
 
 
       .nav__logo {
-
         height: 26px;
       }
 
 
       .nav__logo img {
-
         height: 26px;
       }
 
 
-      /* Hide desktop navigation */
-
       .nav__links {
-
         display: none;
       }
 
 
-      /* Show hamburger */
-
       .nav__menu-button {
-
         display: flex;
       }
 
 
-      /* Mobile dropdown */
-
       .nav__mobile-menu {
-
         display: block;
 
         top: 64px;
@@ -520,7 +438,6 @@
       }
 
     }
-
 
   </style>
 
@@ -542,9 +459,7 @@
     <div class="nav__inner">
 
 
-      <!-- =====================================================
-           LOGO
-      ===================================================== -->
+      <!-- LOGO -->
 
       <a
         class="nav__logo"
@@ -552,16 +467,12 @@
         aria-label="Nexigence Home"
       >
 
-        <!-- Dark logo -->
-
         <img
           data-for="light"
           src="https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/67723ef600ec83ca47fb9c71_Logo_Primary.svg"
           alt="Nexigence"
         >
 
-
-        <!-- White logo -->
 
         <img
           data-for="dark"
@@ -572,10 +483,7 @@
       </a>
 
 
-
-      <!-- =====================================================
-           DESKTOP NAV
-      ===================================================== -->
+      <!-- DESKTOP NAV -->
 
       <ul class="nav__links">
 
@@ -602,10 +510,7 @@
       </ul>
 
 
-
-      <!-- =====================================================
-           MOBILE MENU BUTTON
-      ===================================================== -->
+      <!-- MOBILE BUTTON -->
 
       <button
         class="nav__menu-button"
@@ -627,10 +532,7 @@
     </div>
 
 
-
-    <!-- =====================================================
-         MOBILE MENU
-    ===================================================== -->
+    <!-- MOBILE MENU -->
 
     <div class="nav__mobile-menu">
 
@@ -663,7 +565,6 @@
   </nav>
 
 
-
   <!-- =======================================================
        JAVASCRIPT
   ======================================================= -->
@@ -672,20 +573,13 @@
 
     (function () {
 
-
-      /* =====================================================
-         ELEMENTS
-      ===================================================== */
-
       const nav =
         document.querySelector('.nav');
-
 
       const menuButton =
         document.querySelector(
           '.nav__menu-button'
         );
-
 
       const mobileLinks =
         document.querySelectorAll(
@@ -693,151 +587,46 @@
         );
 
 
-
       /* =====================================================
-         THEME DETECTION
+         RECEIVE THEME FROM WEBFLOW
       ===================================================== */
 
-      /*
-        IMPORTANT:
+      window.addEventListener(
+        'message',
+        function (event) {
 
-        Because this navbar is running inside
-        an iframe, it cannot directly use
-        document.querySelector() on the
-        Webflow page.
+          /*
+            We only care about messages
+            containing a theme.
+          */
 
-        Instead we access the parent document.
-
-        Your Webflow sections should have:
-
-        data-nav-theme="dark"
-
-        OR
-
-        data-nav-theme="light"
-      */
-
-      function getParentSections() {
-
-        try {
-
-          return window.parent.document
-            .querySelectorAll(
-              '[data-nav-theme]'
-            );
-
-        } catch (error) {
-
-          return [];
-
-        }
-
-      }
-
-
-      function updateNavTheme() {
-
-        const sections =
-          getParentSections();
-
-
-        if (!sections.length) {
-
-          return;
-
-        }
-
-
-        /*
-          The iframe navbar itself has
-          a fixed height.
-
-          We check the vertical position
-          corresponding to the bottom edge
-          of the navbar in the parent page.
-        */
-
-        const navHeight =
-          nav.offsetHeight;
-
-
-        /*
-          Get the iframe's position relative
-          to the parent Webflow page.
-        */
-
-        let iframeRect;
-
-
-        try {
-
-          iframeRect =
-            window.frameElement
-              .getBoundingClientRect();
-
-        } catch (error) {
-
-          return;
-
-        }
-
-
-        /*
-          Position of the point directly
-          underneath the navbar in the
-          parent document.
-        */
-
-        const checkY =
-          iframeRect.top +
-          navHeight +
-          1;
-
-
-        let activeSection = null;
-
-
-        sections.forEach(function (section) {
-
-          const rect =
-            section.getBoundingClientRect();
+          if (!event.data) return;
 
 
           if (
-            rect.top <= checkY &&
-            rect.bottom > checkY
+            event.data.type !==
+            'NEXIGENCE_NAV_THEME'
           ) {
-
-            activeSection = section;
-
+            return;
           }
 
-        });
+
+          const theme =
+            event.data.theme;
 
 
-        if (!activeSection) {
-
-          return;
-
-        }
-
-
-        const theme =
-          activeSection.getAttribute(
-            'data-nav-theme'
-          );
+          if (
+            theme !== 'light' &&
+            theme !== 'dark'
+          ) {
+            return;
+          }
 
 
-        /*
-          Only update when the theme
-          actually changes.
-
-          No animation or delay.
-        */
-
-        if (
-          nav.getAttribute('data-theme') !== theme
-        ) {
+          /*
+            Immediate theme change.
+            No delay.
+          */
 
           nav.setAttribute(
             'data-theme',
@@ -845,105 +634,7 @@
           );
 
         }
-
-      }
-
-
-
-      /* =====================================================
-         INITIAL THEME
-      ===================================================== */
-
-      updateNavTheme();
-
-
-
-      /* =====================================================
-         SCROLL
-      ===================================================== */
-
-      let ticking = false;
-
-
-      function handleScroll() {
-
-        if (ticking) {
-
-          return;
-
-        }
-
-
-        window.requestAnimationFrame(
-          function () {
-
-            updateNavTheme();
-
-            ticking = false;
-
-          }
-        );
-
-
-        ticking = true;
-
-      }
-
-
-      /*
-        Listen to the parent Webflow page.
-
-        This is important because the actual
-        scrolling happens outside the iframe.
-      */
-
-      try {
-
-        window.parent.addEventListener(
-          'scroll',
-          handleScroll,
-          {
-            passive: true
-          }
-        );
-
-      } catch (error) {
-
-        window.addEventListener(
-          'scroll',
-          handleScroll,
-          {
-            passive: true
-          }
-        );
-
-      }
-
-
-
-      /* =====================================================
-         RESIZE
-      ===================================================== */
-
-      window.addEventListener(
-        'resize',
-        updateNavTheme
       );
-
-
-      try {
-
-        window.parent.addEventListener(
-          'resize',
-          updateNavTheme
-        );
-
-      } catch (error) {
-
-        // Ignore parent access errors.
-
-      }
-
 
 
       /* =====================================================
@@ -1001,11 +692,6 @@
       );
 
 
-
-      /* =====================================================
-         CLOSE MOBILE MENU AFTER NAVIGATION
-      ===================================================== */
-
       mobileLinks.forEach(
         function (link) {
 
@@ -1017,11 +703,6 @@
         }
       );
 
-
-
-      /* =====================================================
-         CLOSE MOBILE MENU WHEN RETURNING TO DESKTOP
-      ===================================================== */
 
       window.addEventListener(
         'resize',
@@ -1037,7 +718,6 @@
 
         }
       );
-
 
     })();
 
