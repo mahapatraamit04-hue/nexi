@@ -45,6 +45,7 @@
     body {
       width: 100%;
       min-height: 100%;
+
       margin: 0;
       padding: 0;
 
@@ -80,6 +81,7 @@
       transform: translateX(-50%);
 
       width: calc(100% - 4vw);
+
       max-width: var(--maxw);
 
       height: var(--nav-h);
@@ -88,6 +90,11 @@
 
       display: flex;
       align-items: center;
+
+      /*
+        Transparent glass navbar.
+        The desktop navbar stays transparent.
+      */
 
       background: transparent;
 
@@ -144,13 +151,17 @@
       left: 0;
 
       /*
-        IMPORTANT:
-        No transition on theme change.
+        No transition.
+        Logo changes immediately with theme.
       */
 
       transition: none;
     }
 
+
+    /*
+      Dark logo for light background
+    */
 
     .nav__logo img[data-for="light"] {
 
@@ -159,6 +170,10 @@
       opacity: 1;
     }
 
+
+    /*
+      White logo for dark background
+    */
 
     .nav__logo img[data-for="dark"] {
 
@@ -217,7 +232,7 @@
 
 
     /* =========================================================
-       MOBILE BUTTON
+       MOBILE MENU BUTTON
     ========================================================= */
 
     .nav__menu-button {
@@ -302,12 +317,21 @@
 
       width: 100%;
 
-      padding: 24px 20px 32px;
+      /*
+        REAL BACKGROUND
 
-      background: transparent;
+        This prevents the Webflow page content
+        from showing through the mobile menu.
+      */
+
+      background: rgba(255, 255, 255, 0.96);
 
       -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
+
+      padding: 28px 20px 40px;
+
+      min-height: calc(100vh - var(--mobile-nav-h));
 
       opacity: 0;
 
@@ -323,6 +347,21 @@
         visibility .2s ease;
     }
 
+
+    /* =========================================================
+       MOBILE MENU — DARK THEME
+    ========================================================= */
+
+    .nav[data-theme="dark"]
+    .nav__mobile-menu {
+
+      background: rgba(13, 12, 29, 0.96);
+    }
+
+
+    /* =========================================================
+       MOBILE LINKS
+    ========================================================= */
 
     .nav__mobile-links {
 
@@ -352,11 +391,19 @@
     }
 
 
+    .nav[data-theme="dark"]
+    .nav__mobile-links a {
+
+      color: #ffffff;
+    }
+
+
     /* =========================================================
-       MOBILE OPEN
+       MOBILE MENU OPEN
     ========================================================= */
 
-    .nav.menu-open .nav__mobile-menu {
+    .nav.menu-open
+    .nav__mobile-menu {
 
       opacity: 1;
 
@@ -367,6 +414,10 @@
       transform: translateY(0);
     }
 
+
+    /* =========================================================
+       HAMBURGER → X
+    ========================================================= */
 
     .nav.menu-open
     .nav__menu-icon
@@ -430,19 +481,10 @@
     }
 
 
-    .nav[data-theme="dark"]
-    .nav__mobile-links a {
-
-      color: #ffffff;
-    }
-
-
     /* =========================================================
        MOBILE MODE
        
-       IMPORTANT:
-       This is controlled by JS using .is-mobile.
-       This avoids iframe/mobile viewport issues.
+       JS explicitly adds .is-mobile.
     ========================================================= */
 
     .nav.is-mobile {
@@ -453,50 +495,54 @@
     }
 
 
-    .nav.is-mobile .nav__inner {
+    .nav.is-mobile
+    .nav__inner {
 
       padding: 0 20px;
     }
 
 
-    .nav.is-mobile .nav__logo {
+    .nav.is-mobile
+    .nav__logo {
 
       height: 26px;
     }
 
 
-    .nav.is-mobile .nav__logo img {
+    .nav.is-mobile
+    .nav__logo img {
 
       height: 26px;
     }
 
 
-    .nav.is-mobile .nav__links {
+    .nav.is-mobile
+    .nav__links {
 
       display: none;
     }
 
 
-    .nav.is-mobile .nav__menu-button {
+    .nav.is-mobile
+    .nav__menu-button {
 
       display: flex;
     }
 
 
-    .nav.is-mobile .nav__mobile-menu {
+    .nav.is-mobile
+    .nav__mobile-menu {
 
       display: block;
-    }
 
+      top: var(--mobile-nav-h);
 
-    /* =========================================================
-       MOBILE DARK MENU
-    ========================================================= */
+      left: 0;
 
-    .nav.is-mobile[data-theme="dark"]
-    .nav__mobile-links a {
+      width: 100%;
 
-      color: #ffffff;
+      min-height:
+        calc(100vh - var(--mobile-nav-h));
     }
 
 
@@ -504,19 +550,22 @@
        DESKTOP MODE
     ========================================================= */
 
-    .nav.is-desktop .nav__links {
+    .nav.is-desktop
+    .nav__links {
 
       display: flex;
     }
 
 
-    .nav.is-desktop .nav__menu-button {
+    .nav.is-desktop
+    .nav__menu-button {
 
       display: none;
     }
 
 
-    .nav.is-desktop .nav__mobile-menu {
+    .nav.is-desktop
+    .nav__mobile-menu {
 
       display: none;
     }
@@ -538,6 +587,7 @@
     class="nav is-desktop"
     data-theme="light"
   >
+
 
     <div class="nav__inner">
 
@@ -622,6 +672,7 @@
 
       </button>
 
+
     </div>
 
 
@@ -657,6 +708,7 @@
 
     </div>
 
+
   </nav>
 
 
@@ -668,6 +720,10 @@
 
     (function () {
 
+
+      /* =====================================================
+         ELEMENTS
+      ===================================================== */
 
       const nav =
         document.querySelector('.nav');
@@ -687,12 +743,6 @@
 
       /* =====================================================
          RESPONSIVE MODE
-         
-         We explicitly detect the iframe's
-         actual viewport width.
-
-         This is more reliable than relying
-         only on CSS media queries.
       ===================================================== */
 
       function updateResponsiveMode() {
@@ -714,8 +764,8 @@
 
 
         /*
-          If we return to desktop,
-          close the mobile menu.
+          Close mobile menu when
+          switching back to desktop.
         */
 
         if (!isMobile) {
@@ -727,16 +777,16 @@
       }
 
 
-      /* =====================================================
-         INITIAL RESPONSIVE MODE
-      ===================================================== */
+      /*
+        Initial check
+      */
 
       updateResponsiveMode();
 
 
-      /* =====================================================
-         RESPONSIVE MODE ON RESIZE
-      ===================================================== */
+      /*
+        Update when iframe resizes
+      */
 
       window.addEventListener(
         'resize',
@@ -780,7 +830,8 @@
 
 
           /*
-            Theme changes immediately.
+            Immediate theme change.
+            No delay.
           */
 
           nav.setAttribute(
@@ -852,7 +903,7 @@
 
 
       /* =====================================================
-         CLOSE AFTER CLICKING A LINK
+         CLOSE MENU AFTER LINK CLICK
       ===================================================== */
 
       mobileLinks.forEach(
