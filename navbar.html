@@ -58,25 +58,28 @@
        NAVBAR
     ========================================================= */
 
-    .nav {
-      position: fixed;
+   .nav {
+  position: fixed;
 
-      top: 0;
-      left: 0;
+  top: 2vh;
+  left: 50%;
+  transform: translateX(-50%);
 
-      width: 100%;
-      height: var(--nav-h);
+  width: calc(100% - 4vw);
+  max-width: 1500px;
 
-      z-index: 1000;
+  height: var(--nav-h);
 
-      display: flex;
-      align-items: center;
+  z-index: 1000;
 
-      background: transparent;
+  display: flex;
+  align-items: center;
 
-      -webkit-backdrop-filter: blur(12px);
-      backdrop-filter: blur(12px);
-    }
+  background: transparent;
+
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
 
 
     /* =========================================================
@@ -84,19 +87,15 @@
     ========================================================= */
 
     .nav__inner {
-      width: 100%;
-      max-width: var(--maxw);
+  width: 100%;
+  height: 100%;
 
-      height: 100%;
+  padding: 0 32px;
 
-      margin: 0 auto;
-      padding: 0 32px;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
     /* =========================================================
        LOGO
@@ -394,50 +393,25 @@
        MOBILE
     ========================================================= */
 
-    @media (max-width: 767px) {
+@media (max-width: 767px) {
 
-      .nav {
-        height: 64px;
-      }
+  .nav {
+    top: 2vh;
 
+    width: calc(100% - 32px);
 
-      .nav__inner {
-        padding: 0 20px;
-      }
+    height: 64px;
+  }
 
+  .nav__inner {
+    padding: 0 20px;
+  }
 
-      .nav__logo {
-        height: 26px;
-      }
+  .nav__mobile-menu {
+    top: 64px;
+  }
 
-
-      .nav__logo img {
-        height: 26px;
-      }
-
-
-      .nav__links {
-        display: none;
-      }
-
-
-      .nav__menu-button {
-        display: flex;
-      }
-
-
-      .nav__mobile-menu {
-        display: block;
-
-        top: 64px;
-
-        padding:
-          24px
-          20px
-          32px;
-      }
-
-    }
+}
 
   </style>
 
