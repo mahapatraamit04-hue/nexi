@@ -68,17 +68,26 @@
 
 
     /* =========================================================
-       NAVBAR
+       NAVBAR — DESKTOP
     ========================================================= */
 
     .nav {
 
       position: fixed;
 
+      /*
+        Desktop top breathing room
+      */
+
       top: 2vh;
+
       left: 50%;
 
       transform: translateX(-50%);
+
+      /*
+        Desktop max width
+      */
 
       width: calc(100% - 4vw);
 
@@ -92,8 +101,7 @@
       align-items: center;
 
       /*
-        Transparent glass navbar.
-        The desktop navbar stays transparent.
+        Transparent glass navbar
       */
 
       background: transparent;
@@ -115,7 +123,9 @@
       padding: 0 32px;
 
       display: flex;
+
       align-items: center;
+
       justify-content: space-between;
     }
 
@@ -141,6 +151,7 @@
     .nav__logo img {
 
       height: 28px;
+
       width: auto;
 
       display: block;
@@ -152,7 +163,7 @@
 
       /*
         No transition.
-        Logo changes immediately with theme.
+        Theme changes happen immediately.
       */
 
       transition: none;
@@ -160,7 +171,8 @@
 
 
     /*
-      Dark logo for light background
+      Dark logo
+      Used on light sections
     */
 
     .nav__logo img[data-for="light"] {
@@ -172,7 +184,8 @@
 
 
     /*
-      White logo for dark background
+      White logo
+      Used on dark sections
     */
 
     .nav__logo img[data-for="dark"] {
@@ -182,7 +195,7 @@
 
 
     /* =========================================================
-       DESKTOP NAV
+       DESKTOP NAV LINKS
     ========================================================= */
 
     .nav__links {
@@ -240,6 +253,7 @@
       display: none;
 
       width: 40px;
+
       height: 40px;
 
       padding: 0;
@@ -251,6 +265,7 @@
       cursor: pointer;
 
       align-items: center;
+
       justify-content: center;
 
       flex-shrink: 0;
@@ -262,6 +277,7 @@
       position: relative;
 
       width: 22px;
+
       height: 16px;
     }
 
@@ -273,6 +289,7 @@
       left: 0;
 
       width: 22px;
+
       height: 1.5px;
 
       background: var(--ink);
@@ -317,21 +334,27 @@
 
       width: 100%;
 
-      /*
-        REAL BACKGROUND
-
-        This prevents the Webflow page content
-        from showing through the mobile menu.
-      */
-
-      background: rgba(255, 255, 255, 0.96);
-
-      -webkit-backdrop-filter: blur(12px);
-      backdrop-filter: blur(12px);
+      min-height:
+        calc(100vh - var(--mobile-nav-h));
 
       padding: 28px 20px 40px;
 
-      min-height: calc(100vh - var(--mobile-nav-h));
+      /*
+        Glass background.
+
+        The opacity gives the blur something
+        to work with while still hiding most
+        of the page underneath.
+      */
+
+      background:
+        rgba(255, 255, 255, 0.72);
+
+      -webkit-backdrop-filter:
+        blur(20px);
+
+      backdrop-filter:
+        blur(20px);
 
       opacity: 0;
 
@@ -339,7 +362,8 @@
 
       pointer-events: none;
 
-      transform: translateY(-8px);
+      transform:
+        translateY(-8px);
 
       transition:
         opacity .2s ease,
@@ -355,12 +379,19 @@
     .nav[data-theme="dark"]
     .nav__mobile-menu {
 
-      background: rgba(13, 12, 29, 0.96);
+      background:
+        rgba(13, 12, 29, 0.72);
+
+      -webkit-backdrop-filter:
+        blur(20px);
+
+      backdrop-filter:
+        blur(20px);
     }
 
 
     /* =========================================================
-       MOBILE LINKS
+       MOBILE MENU LINKS
     ========================================================= */
 
     .nav__mobile-links {
@@ -377,9 +408,11 @@
 
     .nav__mobile-links a {
 
-      font-family: "Switzer", sans-serif;
+      font-family:
+        "Switzer",
+        sans-serif;
 
-      font-size: 18px;
+      font-size: 14px;
 
       font-weight: 500;
 
@@ -390,6 +423,10 @@
       color: var(--ink);
     }
 
+
+    /*
+      Dark theme mobile links
+    */
 
     .nav[data-theme="dark"]
     .nav__mobile-links a {
@@ -411,7 +448,8 @@
 
       pointer-events: auto;
 
-      transform: translateY(0);
+      transform:
+        translateY(0);
     }
 
 
@@ -448,7 +486,7 @@
 
 
     /* =========================================================
-       DARK THEME
+       DARK THEME — DESKTOP
     ========================================================= */
 
     .nav[data-theme="dark"]
@@ -484,12 +522,26 @@
     /* =========================================================
        MOBILE MODE
        
-       JS explicitly adds .is-mobile.
+       Mobile is explicitly controlled by JS.
     ========================================================= */
 
     .nav.is-mobile {
 
-      width: calc(100% - 32px);
+      /*
+        REMOVE DESKTOP SPACING
+      */
+
+      top: 0;
+
+      left: 0;
+
+      transform: none;
+
+      /*
+        EDGE TO EDGE
+      */
+
+      width: 100%;
 
       height: var(--mobile-nav-h);
     }
@@ -498,7 +550,8 @@
     .nav.is-mobile
     .nav__inner {
 
-      padding: 0 20px;
+      padding:
+        0 20px;
     }
 
 
@@ -516,12 +569,20 @@
     }
 
 
+    /*
+      Hide desktop links
+    */
+
     .nav.is-mobile
     .nav__links {
 
       display: none;
     }
 
+
+    /*
+      Show hamburger
+    */
 
     .nav.is-mobile
     .nav__menu-button {
@@ -530,12 +591,17 @@
     }
 
 
+    /*
+      Mobile menu
+    */
+
     .nav.is-mobile
     .nav__mobile-menu {
 
       display: block;
 
-      top: var(--mobile-nav-h);
+      top:
+        var(--mobile-nav-h);
 
       left: 0;
 
@@ -543,6 +609,24 @@
 
       min-height:
         calc(100vh - var(--mobile-nav-h));
+
+      padding:
+        28px 20px 40px;
+    }
+
+
+    /*
+      Mobile CTA/link size
+    */
+
+    .nav.is-mobile
+    .nav__mobile-links a {
+
+      font-size: 14px;
+
+      font-weight: 500;
+
+      line-height: 1.2;
     }
 
 
@@ -629,30 +713,40 @@
       <ul class="nav__links">
 
         <li>
-          <a href="/">Home</a>
+          <a href="/">
+            Home
+          </a>
         </li>
 
         <li>
-          <a href="/about">About</a>
+          <a href="/about">
+            About
+          </a>
         </li>
 
         <li>
-          <a href="/service">Service</a>
+          <a href="/service">
+            Service
+          </a>
         </li>
 
         <li>
-          <a href="/contact">Contact</a>
+          <a href="/contact">
+            Contact
+          </a>
         </li>
 
         <li>
-          <a href="/logistics">Logistics</a>
+          <a href="/logistics">
+            Logistics
+          </a>
         </li>
 
       </ul>
 
 
       <!-- =====================================================
-           MOBILE BUTTON
+           MOBILE MENU BUTTON
       ===================================================== -->
 
       <button
@@ -665,7 +759,9 @@
         <span class="nav__menu-icon">
 
           <span></span>
+
           <span></span>
+
           <span></span>
 
         </span>
@@ -685,23 +781,33 @@
       <ul class="nav__mobile-links">
 
         <li>
-          <a href="/">Home</a>
+          <a href="/">
+            Home
+          </a>
         </li>
 
         <li>
-          <a href="/about">About</a>
+          <a href="/about">
+            About
+          </a>
         </li>
 
         <li>
-          <a href="/service">Service</a>
+          <a href="/service">
+            Service
+          </a>
         </li>
 
         <li>
-          <a href="/contact">Contact</a>
+          <a href="/contact">
+            Contact
+          </a>
         </li>
 
         <li>
-          <a href="/logistics">Logistics</a>
+          <a href="/logistics">
+            Logistics
+          </a>
         </li>
 
       </ul>
@@ -726,7 +832,9 @@
       ===================================================== */
 
       const nav =
-        document.querySelector('.nav');
+        document.querySelector(
+          '.nav'
+        );
 
 
       const menuButton =
@@ -765,7 +873,7 @@
 
         /*
           Close mobile menu when
-          switching back to desktop.
+          returning to desktop.
         */
 
         if (!isMobile) {
@@ -778,14 +886,14 @@
 
 
       /*
-        Initial check
+        Initial responsive check
       */
 
       updateResponsiveMode();
 
 
       /*
-        Update when iframe resizes
+        Update on resize
       */
 
       window.addEventListener(
@@ -802,7 +910,9 @@
         'message',
         function (event) {
 
-          if (!event.data) return;
+          if (!event.data) {
+            return;
+          }
 
 
           if (
@@ -830,8 +940,10 @@
 
 
           /*
-            Immediate theme change.
-            No delay.
+            Apply theme immediately.
+
+            No transition.
+            No artificial delay.
           */
 
           nav.setAttribute(
@@ -844,7 +956,7 @@
 
 
       /* =====================================================
-         MOBILE MENU
+         CLOSE MENU
       ===================================================== */
 
       function closeMenu() {
@@ -872,6 +984,10 @@
       }
 
 
+      /* =====================================================
+         TOGGLE MENU
+      ===================================================== */
+
       function toggleMenu() {
 
         const isOpen =
@@ -896,6 +1012,10 @@
       }
 
 
+      /* =====================================================
+         HAMBURGER CLICK
+      ===================================================== */
+
       menuButton.addEventListener(
         'click',
         toggleMenu
@@ -903,7 +1023,7 @@
 
 
       /* =====================================================
-         CLOSE MENU AFTER LINK CLICK
+         MOBILE LINK CLICK
       ===================================================== */
 
       mobileLinks.forEach(
