@@ -1,501 +1,529 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Adaptive Navbar</title>
 
-<style>
+  <meta charset="UTF-8">
 
-  /* =========================================================
-     ROOT
-  ========================================================= */
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-  :root {
-    --nav-h: 72px;
-    --maxw: 1500px;
+  <title>Nexigence Navbar</title>
 
-    --navy: #0d0c1d;
-    --ink: #0d0c1d;
-    --paper: #ffffff;
 
-    --mobile-breakpoint: 767px;
-  }
+  <style>
 
+    /* =========================================================
+       ROOT
+    ========================================================= */
 
-  /* =========================================================
-     RESET
-  ========================================================= */
+    :root {
+      --nav-h: 72px;
+      --maxw: 1500px;
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+      --navy: #0d0c1d;
+      --ink: #0d0c1d;
+      --paper: #ffffff;
+    }
 
 
-  html {
-    scroll-behavior: smooth;
-  }
+    /* =========================================================
+       RESET
+    ========================================================= */
 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  body {
-    font-family:
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      Roboto,
-      Helvetica,
-      Arial,
-      sans-serif;
-  }
 
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+    }
 
-  /* =========================================================
-     NAVBAR
-  ========================================================= */
 
-  .nav {
-    position: fixed;
-    top: 0;
-    left: 0;
+    body {
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
 
-    width: 100%;
-    height: var(--nav-h);
+      background: transparent;
+    }
 
-    z-index: 1000;
 
-    display: flex;
-    align-items: center;
-
-    /*
-      Transparent glass.
-      No white/dark tint.
-    */
-    background: transparent;
-
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
-
-
-  /* =========================================================
-     NAV INNER
-  ========================================================= */
-
-  .nav__inner {
-    width: 100%;
-    max-width: var(--maxw);
-
-    margin: 0 auto;
-    padding: 0 32px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-
-  /* =========================================================
-     LOGO
-  ========================================================= */
-
-  .nav__logo {
-    position: relative;
-
-    display: block;
-
-    height: 28px;
-    line-height: 0;
-
-    flex-shrink: 0;
-  }
-
-
-  .nav__logo img {
-    height: 28px;
-    width: auto;
-
-    display: block;
-
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    /*
-      IMPORTANT:
-      No transition.
-      Logo changes immediately.
-    */
-    transition: none;
-  }
-
-
-  .nav__logo img[data-for="light"] {
-    position: relative;
-    opacity: 1;
-  }
-
-
-  .nav__logo img[data-for="dark"] {
-    opacity: 0;
-  }
-
-
-  /* =========================================================
-     DESKTOP CENTER NAV
-  ========================================================= */
-
-  .nav__links {
-    display: flex;
-    align-items: center;
-
-    gap: 36px;
-
-    list-style: none;
-
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-
-  .nav__links a {
-    font-family: "Switzer", sans-serif;
-
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1.2;
-    letter-spacing: 0;
-
-    text-decoration: none;
-
-    color: var(--ink);
-    opacity: .85;
-
-    /*
-      Only hover opacity animates.
-      Theme color changes immediately.
-    */
-    transition: opacity .2s ease;
-  }
-
-
-  .nav__links a:hover {
-    opacity: 1;
-  }
-
-
-  /* =========================================================
-     MOBILE MENU BUTTON
-  ========================================================= */
-
-  .nav__menu-button {
-    display: none;
-
-    width: 40px;
-    height: 40px;
-
-    padding: 0;
-
-    border: 0;
-    background: transparent;
-
-    cursor: pointer;
-
-    align-items: center;
-    justify-content: center;
-
-    flex-shrink: 0;
-  }
-
-
-  .nav__menu-icon {
-    position: relative;
-
-    width: 22px;
-    height: 16px;
-  }
-
-
-  .nav__menu-icon span {
-    position: absolute;
-
-    left: 0;
-
-    width: 22px;
-    height: 1.5px;
-
-    background: var(--ink);
-
-    transition:
-      transform .2s ease,
-      opacity .2s ease,
-      background 0s;
-  }
-
-
-  .nav__menu-icon span:nth-child(1) {
-    top: 2px;
-  }
-
-
-  .nav__menu-icon span:nth-child(2) {
-    top: 8px;
-  }
-
-
-  .nav__menu-icon span:nth-child(3) {
-    top: 14px;
-  }
-
-
-  /* =========================================================
-     MOBILE MENU
-  ========================================================= */
-
-  .nav__mobile-menu {
-    display: none;
-
-    position: fixed;
-
-    top: var(--nav-h);
-    left: 0;
-
-    width: 100%;
-
-    padding: 24px 32px 32px;
-
-    background: transparent;
-
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-
-    transform: translateY(-8px);
-
-    transition:
-      opacity .2s ease,
-      transform .2s ease,
-      visibility .2s ease;
-  }
-
-
-  .nav__mobile-links {
-    display: flex;
-    flex-direction: column;
-
-    gap: 22px;
-
-    list-style: none;
-  }
-
-
-  .nav__mobile-links a {
-    font-family: "Switzer", sans-serif;
-
-    font-size: 18px;
-    font-weight: 500;
-    line-height: 1.2;
-
-    text-decoration: none;
-
-    color: var(--ink);
-  }
-
-
-  /* =========================================================
-     MOBILE MENU OPEN
-  ========================================================= */
-
-  .nav.menu-open .nav__mobile-menu {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-
-    transform: translateY(0);
-  }
-
-
-  /*
-    Hamburger → X
-  */
-
-  .nav.menu-open .nav__menu-icon span:nth-child(1) {
-    transform: translateY(6px) rotate(45deg);
-  }
-
-
-  .nav.menu-open .nav__menu-icon span:nth-child(2) {
-    opacity: 0;
-  }
-
-
-  .nav.menu-open .nav__menu-icon span:nth-child(3) {
-    transform: translateY(-6px) rotate(-45deg);
-  }
-
-
-  /* =========================================================
-     DARK THEME
-  ========================================================= */
-
-  .nav[data-theme="dark"] {
-    background: transparent;
-  }
-
-
-  .nav[data-theme="dark"] .nav__links a {
-    color: var(--paper);
-  }
-
-
-  .nav[data-theme="dark"] .nav__logo img[data-for="light"] {
-    opacity: 0;
-  }
-
-
-  .nav[data-theme="dark"] .nav__logo img[data-for="dark"] {
-    opacity: 1;
-  }
-
-
-  .nav[data-theme="dark"] .nav__menu-icon span {
-    background: var(--paper);
-  }
-
-
-  .nav[data-theme="dark"] .nav__mobile-links a {
-    color: var(--paper);
-  }
-
-
-  /* =========================================================
-     MOBILE
-  ========================================================= */
-
-  @media (max-width: 767px) {
+    /* =========================================================
+       NAVBAR
+    ========================================================= */
 
     .nav {
-      height: 64px;
+
+      position: fixed;
+
+      top: 0;
+      left: 0;
+
+      width: 100%;
+      height: var(--nav-h);
+
+      z-index: 1000;
+
+      display: flex;
+      align-items: center;
+
+      /*
+        Transparent glass.
+
+        No white overlay.
+        No dark overlay.
+      */
+
+      background: transparent;
+
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
     }
 
+
+    /* =========================================================
+       NAV INNER
+    ========================================================= */
 
     .nav__inner {
-      padding: 0 20px;
+
+      width: 100%;
+      max-width: var(--maxw);
+
+      height: 100%;
+
+      margin: 0 auto;
+
+      padding: 0 32px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
 
+    /* =========================================================
+       LOGO
+    ========================================================= */
+
     .nav__logo {
-      height: 26px;
+
+      position: relative;
+
+      display: block;
+
+      height: 28px;
+
+      line-height: 0;
+
+      flex-shrink: 0;
     }
 
 
     .nav__logo img {
-      height: 26px;
-    }
 
+      height: 28px;
+      width: auto;
 
-    /*
-      Hide desktop navigation.
-    */
-
-    .nav__links {
-      display: none;
-    }
-
-
-    /*
-      Show hamburger.
-    */
-
-    .nav__menu-button {
-      display: flex;
-    }
-
-
-    /*
-      Mobile menu starts below
-      the 64px mobile navbar.
-    */
-
-    .nav__mobile-menu {
       display: block;
 
-      top: 64px;
+      position: absolute;
 
-      padding:
-        24px
-        20px
-        32px;
+      top: 0;
+      left: 0;
+
+      /*
+        No transition.
+
+        Theme changes immediately.
+      */
+
+      transition: none;
+    }
+
+
+    /* Dark logo */
+
+    .nav__logo img[data-for="light"] {
+
+      position: relative;
+
+      opacity: 1;
+    }
+
+
+    /* White logo */
+
+    .nav__logo img[data-for="dark"] {
+
+      opacity: 0;
+    }
+
+
+    /* =========================================================
+       DESKTOP NAV
+    ========================================================= */
+
+    .nav__links {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 36px;
+
+      list-style: none;
+
+      position: absolute;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+    }
+
+
+    .nav__links a {
+
+      font-family: "Switzer", sans-serif;
+
+      font-size: 15px;
+
+      font-weight: 500;
+
+      line-height: 1.2;
+
+      letter-spacing: 0;
+
+      text-decoration: none;
+
+      color: var(--ink);
+
+      opacity: .85;
+
+      /*
+        Only hover opacity animates.
+
+        Theme color switches instantly.
+      */
+
+      transition: opacity .2s ease;
+    }
+
+
+    .nav__links a:hover {
+
+      opacity: 1;
+    }
+
+
+    /* =========================================================
+       MOBILE MENU BUTTON
+    ========================================================= */
+
+    .nav__menu-button {
+
+      display: none;
+
+      width: 40px;
+      height: 40px;
+
+      padding: 0;
+
+      border: 0;
+
+      background: transparent;
+
+      cursor: pointer;
+
+      align-items: center;
+
+      justify-content: center;
+
+      flex-shrink: 0;
+    }
+
+
+    .nav__menu-icon {
+
+      position: relative;
+
+      width: 22px;
+      height: 16px;
+    }
+
+
+    .nav__menu-icon span {
+
+      position: absolute;
+
+      left: 0;
+
+      width: 22px;
+      height: 1.5px;
+
+      background: var(--ink);
+
+      transition:
+        transform .2s ease,
+        opacity .2s ease;
+    }
+
+
+    .nav__menu-icon span:nth-child(1) {
+
+      top: 2px;
+    }
+
+
+    .nav__menu-icon span:nth-child(2) {
+
+      top: 8px;
+    }
+
+
+    .nav__menu-icon span:nth-child(3) {
+
+      top: 14px;
+    }
+
+
+    /* =========================================================
+       MOBILE MENU
+    ========================================================= */
+
+    .nav__mobile-menu {
+
+      display: none;
+
+      position: fixed;
+
+      top: var(--nav-h);
+
+      left: 0;
+
+      width: 100%;
+
+      padding: 24px 32px 32px;
+
+      background: transparent;
+
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+
+      opacity: 0;
+
+      visibility: hidden;
+
+      pointer-events: none;
+
+      transform: translateY(-8px);
+
+      transition:
+        opacity .2s ease,
+        transform .2s ease,
+        visibility .2s ease;
     }
 
 
     .nav__mobile-links {
+
+      display: flex;
+
+      flex-direction: column;
+
       gap: 24px;
+
+      list-style: none;
     }
 
 
     .nav__mobile-links a {
+
+      font-family: "Switzer", sans-serif;
+
       font-size: 18px;
+
       font-weight: 500;
+
+      line-height: 1.2;
+
+      text-decoration: none;
+
+      color: var(--ink);
     }
 
-  }
+
+    /* =========================================================
+       MOBILE MENU OPEN
+    ========================================================= */
+
+    .nav.menu-open .nav__mobile-menu {
+
+      opacity: 1;
+
+      visibility: visible;
+
+      pointer-events: auto;
+
+      transform: translateY(0);
+    }
 
 
-  /* =========================================================
-     DEMO SECTIONS
-     Remove these when moving to Webflow
-  ========================================================= */
+    .nav.menu-open
+    .nav__menu-icon
+    span:nth-child(1) {
 
-  main section {
-    min-height: 100vh;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 120px 32px;
-
-    text-align: center;
-  }
+      transform:
+        translateY(6px)
+        rotate(45deg);
+    }
 
 
-  section[data-nav-theme="light"] {
-    background: #ffffff;
-    color: #0d0c1d;
-  }
+    .nav.menu-open
+    .nav__menu-icon
+    span:nth-child(2) {
+
+      opacity: 0;
+    }
 
 
-  section[data-nav-theme="dark"] {
-    background: #0d0c1d;
-    color: #ffffff;
-  }
+    .nav.menu-open
+    .nav__menu-icon
+    span:nth-child(3) {
+
+      transform:
+        translateY(-6px)
+        rotate(-45deg);
+    }
 
 
-  section h2 {
-    font-size: clamp(28px, 5vw, 56px);
+    /* =========================================================
+       DARK THEME
+    ========================================================= */
 
-    font-weight: 600;
+    .nav[data-theme="dark"] {
 
-    letter-spacing: -.02em;
-  }
-
-
-  section p {
-    margin-top: 12px;
-
-    opacity: .6;
-
-    font-size: 15px;
-  }
+      background: transparent;
+    }
 
 
-</style>
+    .nav[data-theme="dark"]
+    .nav__links a {
+
+      color: var(--paper);
+    }
+
+
+    .nav[data-theme="dark"]
+    .nav__logo
+    img[data-for="light"] {
+
+      opacity: 0;
+    }
+
+
+    .nav[data-theme="dark"]
+    .nav__logo
+    img[data-for="dark"] {
+
+      opacity: 1;
+    }
+
+
+    .nav[data-theme="dark"]
+    .nav__menu-icon span {
+
+      background: var(--paper);
+    }
+
+
+    .nav[data-theme="dark"]
+    .nav__mobile-links a {
+
+      color: var(--paper);
+    }
+
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    @media (max-width: 767px) {
+
+      .nav {
+
+        height: 64px;
+      }
+
+
+      .nav__inner {
+
+        padding: 0 20px;
+      }
+
+
+      .nav__logo {
+
+        height: 26px;
+      }
+
+
+      .nav__logo img {
+
+        height: 26px;
+      }
+
+
+      /* Hide desktop navigation */
+
+      .nav__links {
+
+        display: none;
+      }
+
+
+      /* Show hamburger */
+
+      .nav__menu-button {
+
+        display: flex;
+      }
+
+
+      /* Mobile dropdown */
+
+      .nav__mobile-menu {
+
+        display: block;
+
+        top: 64px;
+
+        padding:
+          24px
+          20px
+          32px;
+      }
+
+    }
+
+
+  </style>
+
 </head>
 
 
@@ -514,14 +542,14 @@
     <div class="nav__inner">
 
 
-      <!-- ===================================================
+      <!-- =====================================================
            LOGO
-      =================================================== -->
+      ===================================================== -->
 
       <a
         class="nav__logo"
-        href="#home"
-        aria-label="Home"
+        href="/"
+        aria-label="Nexigence Home"
       >
 
         <!-- Dark logo -->
@@ -529,7 +557,7 @@
         <img
           data-for="light"
           src="https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/67723ef600ec83ca47fb9c71_Logo_Primary.svg"
-          alt="Logo"
+          alt="Nexigence"
         >
 
 
@@ -538,46 +566,46 @@
         <img
           data-for="dark"
           src="https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/67723ef600ec83ca47fb9c70_Asset%208.svg"
-          alt="Logo"
+          alt="Nexigence"
         >
 
       </a>
 
 
 
-      <!-- ===================================================
+      <!-- =====================================================
            DESKTOP NAV
-      =================================================== -->
+      ===================================================== -->
 
       <ul class="nav__links">
 
         <li>
-          <a href="#home">Home</a>
+          <a href="/">Home</a>
         </li>
 
         <li>
-          <a href="#about">About</a>
+          <a href="/about">About</a>
         </li>
 
         <li>
-          <a href="#service">Service</a>
+          <a href="/service">Service</a>
         </li>
 
         <li>
-          <a href="#contact">Contact</a>
+          <a href="/contact">Contact</a>
         </li>
 
         <li>
-          <a href="#logistics">Logistics</a>
+          <a href="/logistics">Logistics</a>
         </li>
 
       </ul>
 
 
 
-      <!-- ===================================================
+      <!-- =====================================================
            MOBILE MENU BUTTON
-      =================================================== -->
+      ===================================================== -->
 
       <button
         class="nav__menu-button"
@@ -596,7 +624,6 @@
 
       </button>
 
-
     </div>
 
 
@@ -610,23 +637,23 @@
       <ul class="nav__mobile-links">
 
         <li>
-          <a href="#home">Home</a>
+          <a href="/">Home</a>
         </li>
 
         <li>
-          <a href="#about">About</a>
+          <a href="/about">About</a>
         </li>
 
         <li>
-          <a href="#service">Service</a>
+          <a href="/service">Service</a>
         </li>
 
         <li>
-          <a href="#contact">Contact</a>
+          <a href="/contact">Contact</a>
         </li>
 
         <li>
-          <a href="#logistics">Logistics</a>
+          <a href="/logistics">Logistics</a>
         </li>
 
       </ul>
@@ -638,130 +665,27 @@
 
 
   <!-- =======================================================
-       PAGE
-  ======================================================= -->
-
-  <main>
-
-
-    <section
-      id="home"
-      data-nav-theme="dark"
-    >
-
-      <div>
-
-        <h2>Home</h2>
-
-        <p>
-          navy section, nav goes white
-        </p>
-
-      </div>
-
-    </section>
-
-
-
-    <section
-      id="about"
-      data-nav-theme="light"
-    >
-
-      <div>
-
-        <h2>About</h2>
-
-        <p>
-          white section, nav goes dark
-        </p>
-
-      </div>
-
-    </section>
-
-
-
-    <section
-      id="service"
-      data-nav-theme="dark"
-    >
-
-      <div>
-
-        <h2>Service</h2>
-
-        <p>
-          navy again
-        </p>
-
-      </div>
-
-    </section>
-
-
-
-    <section
-      id="contact"
-      data-nav-theme="light"
-    >
-
-      <div>
-
-        <h2>Contact</h2>
-
-        <p>
-          white again
-        </p>
-
-      </div>
-
-    </section>
-
-
-
-    <section
-      id="logistics"
-      data-nav-theme="dark"
-    >
-
-      <div>
-
-        <h2>Logistics</h2>
-
-        <p>
-          navy
-        </p>
-
-      </div>
-
-    </section>
-
-
-  </main>
-
-
-
-  <!-- =======================================================
-       NAV THEME + MOBILE MENU LOGIC
+       JAVASCRIPT
   ======================================================= -->
 
   <script>
 
     (function () {
 
+
+      /* =====================================================
+         ELEMENTS
+      ===================================================== */
+
       const nav =
         document.querySelector('.nav');
 
-      const sections =
-        document.querySelectorAll(
-          '[data-nav-theme]'
-        );
 
       const menuButton =
         document.querySelector(
           '.nav__menu-button'
         );
+
 
       const mobileLinks =
         document.querySelectorAll(
@@ -769,17 +693,106 @@
         );
 
 
+
       /* =====================================================
          THEME DETECTION
       ===================================================== */
 
+      /*
+        IMPORTANT:
+
+        Because this navbar is running inside
+        an iframe, it cannot directly use
+        document.querySelector() on the
+        Webflow page.
+
+        Instead we access the parent document.
+
+        Your Webflow sections should have:
+
+        data-nav-theme="dark"
+
+        OR
+
+        data-nav-theme="light"
+      */
+
+      function getParentSections() {
+
+        try {
+
+          return window.parent.document
+            .querySelectorAll(
+              '[data-nav-theme]'
+            );
+
+        } catch (error) {
+
+          return [];
+
+        }
+
+      }
+
+
       function updateNavTheme() {
+
+        const sections =
+          getParentSections();
+
+
+        if (!sections.length) {
+
+          return;
+
+        }
+
+
+        /*
+          The iframe navbar itself has
+          a fixed height.
+
+          We check the vertical position
+          corresponding to the bottom edge
+          of the navbar in the parent page.
+        */
 
         const navHeight =
           nav.offsetHeight;
 
+
+        /*
+          Get the iframe's position relative
+          to the parent Webflow page.
+        */
+
+        let iframeRect;
+
+
+        try {
+
+          iframeRect =
+            window.frameElement
+              .getBoundingClientRect();
+
+        } catch (error) {
+
+          return;
+
+        }
+
+
+        /*
+          Position of the point directly
+          underneath the navbar in the
+          parent document.
+        */
+
         const checkY =
-          navHeight + 1;
+          iframeRect.top +
+          navHeight +
+          1;
+
 
         let activeSection = null;
 
@@ -789,11 +802,6 @@
           const rect =
             section.getBoundingClientRect();
 
-
-          /*
-            Find the section physically
-            underneath the navbar.
-          */
 
           if (
             rect.top <= checkY &&
@@ -807,7 +815,11 @@
         });
 
 
-        if (!activeSection) return;
+        if (!activeSection) {
+
+          return;
+
+        }
 
 
         const theme =
@@ -819,6 +831,8 @@
         /*
           Only update when the theme
           actually changes.
+
+          No animation or delay.
         */
 
         if (
@@ -835,9 +849,13 @@
       }
 
 
-      /* Initial theme */
+
+      /* =====================================================
+         INITIAL THEME
+      ===================================================== */
 
       updateNavTheme();
+
 
 
       /* =====================================================
@@ -847,31 +865,60 @@
       let ticking = false;
 
 
-      window.addEventListener(
-        'scroll',
-        function () {
+      function handleScroll() {
 
-          if (ticking) return;
+        if (ticking) {
 
+          return;
 
-          window.requestAnimationFrame(
-            function () {
-
-              updateNavTheme();
-
-              ticking = false;
-
-            }
-          );
-
-
-          ticking = true;
-
-        },
-        {
-          passive: true
         }
-      );
+
+
+        window.requestAnimationFrame(
+          function () {
+
+            updateNavTheme();
+
+            ticking = false;
+
+          }
+        );
+
+
+        ticking = true;
+
+      }
+
+
+      /*
+        Listen to the parent Webflow page.
+
+        This is important because the actual
+        scrolling happens outside the iframe.
+      */
+
+      try {
+
+        window.parent.addEventListener(
+          'scroll',
+          handleScroll,
+          {
+            passive: true
+          }
+        );
+
+      } catch (error) {
+
+        window.addEventListener(
+          'scroll',
+          handleScroll,
+          {
+            passive: true
+          }
+        );
+
+      }
+
 
 
       /* =====================================================
@@ -884,6 +931,21 @@
       );
 
 
+      try {
+
+        window.parent.addEventListener(
+          'resize',
+          updateNavTheme
+        );
+
+      } catch (error) {
+
+        // Ignore parent access errors.
+
+      }
+
+
+
       /* =====================================================
          MOBILE MENU
       ===================================================== */
@@ -894,10 +956,12 @@
           'menu-open'
         );
 
+
         menuButton.setAttribute(
           'aria-expanded',
           'false'
         );
+
 
         menuButton.setAttribute(
           'aria-label',
@@ -917,7 +981,7 @@
 
         menuButton.setAttribute(
           'aria-expanded',
-          isOpen
+          String(isOpen)
         );
 
 
@@ -937,7 +1001,10 @@
       );
 
 
-      /* Close menu after selecting a link */
+
+      /* =====================================================
+         CLOSE MOBILE MENU AFTER NAVIGATION
+      ===================================================== */
 
       mobileLinks.forEach(
         function (link) {
@@ -951,10 +1018,10 @@
       );
 
 
-      /*
-        If the browser is resized back to desktop,
-        make sure the mobile menu is closed.
-      */
+
+      /* =====================================================
+         CLOSE MOBILE MENU WHEN RETURNING TO DESKTOP
+      ===================================================== */
 
       window.addEventListener(
         'resize',
@@ -971,10 +1038,12 @@
         }
       );
 
+
     })();
 
   </script>
 
 
 </body>
+
 </html>
