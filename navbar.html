@@ -340,21 +340,11 @@
       padding: 28px 20px 40px;
 
       /*
-        Glass background.
-
-        The opacity gives the blur something
-        to work with while still hiding most
-        of the page underneath.
+        Solid dark background.
+        Page content no longer bleeds through.
       */
 
-      background:
-        rgba(255, 255, 255, 0.72);
-
-      -webkit-backdrop-filter:
-        blur(20px);
-
-      backdrop-filter:
-        blur(20px);
+      background: #0D0C1D;
 
       opacity: 0;
 
@@ -374,19 +364,13 @@
 
     /* =========================================================
        MOBILE MENU — DARK THEME
+       (kept solid dark to match light theme)
     ========================================================= */
 
     .nav[data-theme="dark"]
     .nav__mobile-menu {
 
-      background:
-        rgba(13, 12, 29, 0.72);
-
-      -webkit-backdrop-filter:
-        blur(20px);
-
-      backdrop-filter:
-        blur(20px);
+      background: #0D0C1D;
     }
 
 
@@ -406,6 +390,11 @@
     }
 
 
+    /*
+      Links are always white now,
+      because the panel is always dark.
+    */
+
     .nav__mobile-links a {
 
       font-family:
@@ -420,13 +409,9 @@
 
       text-decoration: none;
 
-      color: var(--ink);
+      color: #ffffff;
     }
 
-
-    /*
-      Dark theme mobile links
-    */
 
     .nav[data-theme="dark"]
     .nav__mobile-links a {
@@ -630,6 +615,38 @@
     }
 
 
+    /*
+      MOBILE — LOCK NAVBAR TO DARK STYLING
+
+      In mobile we ignore the section theme entirely.
+      Logo stays white, hamburger stays white,
+      so nothing changes color while scrolling and
+      the close icon is always visible on the dark menu.
+    */
+
+    .nav.is-mobile
+    .nav__logo
+    img[data-for="light"] {
+
+      opacity: 0;
+    }
+
+
+    .nav.is-mobile
+    .nav__logo
+    img[data-for="dark"] {
+
+      opacity: 1;
+    }
+
+
+    .nav.is-mobile
+    .nav__menu-icon span {
+
+      background: #ffffff;
+    }
+
+
     /* =========================================================
        DESKTOP MODE
     ========================================================= */
@@ -713,25 +730,25 @@
       <ul class="nav__links">
 
         <li>
-          <a href="/">
+          <a href="https://nexigence-4672f96d5b2382a70aa024f13c72e.webflow.io/home">
             Home
           </a>
         </li>
 
         <li>
-          <a href="/about">
+          <a href="https://nexigence-4672f96d5b2382a70aa024f13c72e.webflow.io/about-us">
             About
           </a>
         </li>
 
         <li>
-          <a href="/service">
+          <a href="https://nexigence-4672f96d5b2382a70aa024f13c72e.webflow.io/nexservices">
             Service
           </a>
         </li>
 
         <li>
-          <a href="/contact">
+          <a href="https://nexigence-4672f96d5b2382a70aa024f13c72e.webflow.io/contact-us">
             Contact
           </a>
         </li>
@@ -781,25 +798,25 @@
       <ul class="nav__mobile-links">
 
         <li>
-          <a href="/">
+          <a href="https://nexigence-4672f96d5b2382a70aa024f13c72e.webflow.io/home">
             Home
           </a>
         </li>
 
         <li>
-          <a href="/about">
+          <a href="https://nexigence-4672f96d5b2382a70aa024f13c72e.webflow.io/about-us">
             About
           </a>
         </li>
 
         <li>
-          <a href="/service">
+          <a href="https://nexigence-4672f96d5b2382a70aa024f13c72e.webflow.io/nexservices">
             Service
           </a>
         </li>
 
         <li>
-          <a href="/contact">
+          <a href="https://nexigence-4672f96d5b2382a70aa024f13c72e.webflow.io/contact-us">
             Contact
           </a>
         </li>
@@ -847,6 +864,71 @@
         document.querySelectorAll(
           '.nav__mobile-links a'
         );
+
+
+      /* =====================================================
+         LOCK / UNLOCK PAGE SCROLL
+
+         This navbar is a transparent full-viewport embed,
+         so the real page scrolls in the PARENT window.
+         We lock the parent directly (same-origin), and
+         fall back to a postMessage + local lock otherwise.
+      ===================================================== */
+
+      function lockPageScroll(lock) {
+
+        const value = lock ? 'hidden' : '';
+
+
+        /*
+          Local (covers non-iframe embeds)
+        */
+
+        document.documentElement.style.overflow = value;
+        document.body.style.overflow = value;
+
+
+        /*
+          Parent page
+        */
+
+        try {
+
+          if (
+            window.parent &&
+            window.parent !== window
+          ) {
+
+            window.parent.document
+              .documentElement.style.overflow = value;
+
+            window.parent.document
+              .body.style.overflow = value;
+
+          }
+
+        } catch (e) {
+
+          /*
+            Cross-origin fallback.
+            Requires a small listener in Webflow.
+          */
+
+          try {
+
+            window.parent.postMessage(
+              {
+                type: 'NEXIGENCE_NAV_MENU',
+                open: lock
+              },
+              '*'
+            );
+
+          } catch (e2) {}
+
+        }
+
+      }
 
 
       /* =====================================================
@@ -966,6 +1048,9 @@
         );
 
 
+        lockPageScroll(false);
+
+
         if (menuButton) {
 
           menuButton.setAttribute(
@@ -994,6 +1079,16 @@
           nav.classList.toggle(
             'menu-open'
           );
+
+
+        /*
+          Lock page scroll only in mobile.
+        */
+
+        lockPageScroll(
+          isOpen &&
+          nav.classList.contains('is-mobile')
+        );
 
 
         menuButton.setAttribute(
