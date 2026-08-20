@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;padding:0;background:#fff;}</style>
+</head>
+<body>
+
+<div id="ls-stage" role="img" aria-label="Rotating sphere of partner logos">
+  <svg id="ls-edges" aria-hidden="true"></svg>
+</div>
+
+<style>
+  #ls-stage{
+    position:relative;
+    width:100%;
+    height:100vh;
+    height:100svh;
+    overflow:hidden;
+    cursor:grab;
+    touch-action:none;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  #ls-stage.is-grabbing{ cursor:grabbing; }
+  #ls-edges{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    z-index:0;
+  }
+  #ls-edges line{ fill:none; }
+  .ls-base{ stroke-width:1; stroke-linecap:round; }
+  .ls-glow{ stroke-linecap:round; }
+  .ls-core{ stroke-linecap:round; }
+  .ls-card{
+    position:absolute;
+    top:0; left:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:16px;
+    overflow:hidden;
+    background:#fff;
+    will-change:transform, background-color, box-shadow;
+    pointer-events:none;
+  }
+  .ls-card .ls-logo{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    will-change:filter, opacity;
+  }
+  .ls-card .ls-logo svg{ width:100%; height:100%; }
+</style>
+
+<script>
+(function () {
+  var CFG = {
+    layout: 'scatter',
+    scatterSeed: 7,
+    scatterMinDist: 0.95,
+    initTiltX: 0,
+    radius: 0.42,
+    flatten: 1.0,
+    minRadiusPx: 150,
+    maxRadiusPx: 360,
+    cardScale: 0.4216,
+    cardRadius: 16,
+    minScale: 0.56,
+    backTint: 0xe2e2e2,
+    frontTint: 0xffffff,
+    backDesat: 1.0,
+    shadowStrength: 0.16,
+    showLabels: false,
+
+    edgesMode: 'hull',
+    edgesPerNode: 3,
+    longLinks: 4,
+    baseColor: '#c9c9c9',
+    baseMinOpacity: 0.10,
+    baseMaxOpacity: 0.55,
+
+    pulseColor: '#6f6f6f',
+    pulseWidth: 1.6,
+    pulseGlowWidth: 5,
+    pulseGlowOpacity: 0.14,
+    pulseLength: 0.30,
+    pulseSpeed: 0.0055,
+    activePulses: 3,
+
+    autoRotateSpeed: 0.00072,
+    dragSensitivity: 0.008,
+    friction: 0.94,
+
+    // bump this any time you re-upload a logo, to force a fresh download
+    imgVersion: 3
+  };
+
+  var LOGO_BASE = 60;
+
+  // ---- the 9 logo cards. src = the image shown on that card ----
+  var NODES = [
+    { label:'Card1', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a86988a06389342481f0bf8_Frame%207619.png' },
+    { label:'Card2', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a86988a532dd5988746a9d3_Frame%207617.png' },
+    { label:'Card3', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a86988a953c11cbf21e61e9_Frame%207618.png' },
+    { label:'Card4', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a86988a4c0329383324ca3c_Frame%207616.png' },
+    { label:'Card5', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a869b21cdb2d6a1deb44cae_Frame%207620.png' },
+    { label:'Card6', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a869b215589cd2a4eda7b52_Frame%207623.png' },
+    { label:'Card7', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a869b2115ce9b0d9bd8ca16_Frame%207621.png' },
+    { label:'Card8', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a869b219aa6c4b43d04e740_Frame%207622.png' },
+    { label:'Card9', w:60, h:60, src:'https://cdn.prod.website-files.com/67723ef600ec83ca47fb9a97/6a869b216accc8fca2625eed_Frame%207624.png' }
+  ];
+
+  function placeholder(node){
+    var c = node.accent || '#9aa0a6', l = ((node.label||'?')[0] || '?').toUpperCase();
+    return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">' +
+             '<rect x="6" y="6" width="88" height="88" rx="22" fill="' + c + '"/>' +
+             '<text x="50" y="50" dy="0.35em" text-anchor="middle" ' +
+               'font-family="Georgia, serif" font-size="46" font-weight="700" ' +
+               'fill="#fff">' + l + '</text></svg>';
+  }
+
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function scatterVectors(n, seed, minDist, flatten){
+    var rand = mulberry32(seed), pts = [], cosMin = Math.cos(minDist), tries = 0, cap = n * 600;
+    function randPoint(){
+      var u = rand() * 2 - 1, th = rand() * Math.PI * 2, r = Math.sqrt(1 - u * u);
+      return { ux: Math.cos(th) * r, uy: u, uz: Math.sin(th) * r };
+    }
+    while (pts.length < n && tries < cap){
+      tries++;
+      var v = randPoint(), ok = true;
+      for (var k = 0; k < pts.length; k++){
+        if (v.ux*pts[k].ux + v.uy*pts[k].uy + v.uz*pts[k].uz > cosMin){ ok = false; break; }
+      }
+      if (ok) pts.push(v);
+    }
+    while (pts.length < n){ pts.push(randPoint()); }
+    pts.forEach(function(p){ p.uz *= flatten; });
+    return pts;
+  }
+  function buildHull(pts){
+    var n=pts.length, eps=1e-6, set={}, edges=[];
+    function sub(a,b){ return [a.ux-b.ux, a.uy-b.uy, a.uz-b.uz]; }
+    function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+    function dotv(a,b){ return a[0]*b.ux + a[1]*b.uy + a[2]*b.uz; }
+    function addE(i,j){ var lo=Math.min(i,j), hi=Math.max(i,j), k=lo+'-'+hi; if(!set[k]){ set[k]=1; edges.push([lo,hi]); } }
+    for (var i=0;i<n;i++) for (var j=i+1;j<n;j++) for (var k=j+1;k<n;k++){
+      var nrm=cross(sub(pts[j],pts[i]), sub(pts[k],pts[i]));
+      if (Math.sqrt(nrm[0]*nrm[0]+nrm[1]*nrm[1]+nrm[2]*nrm[2]) < eps) continue;
+      var d=dotv(nrm, pts[i]), pos=false, neg=false, bad=false;
+      for (var m=0;m<n;m++){
+        if (m===i||m===j||m===k) continue;
+        var s=dotv(nrm, pts[m]) - d;
+        if (s>eps) pos=true; else if (s<-eps) neg=true;
+        if (pos&&neg){ bad=true; break; }
+      }
+      if (!bad){ addE(i,j); addE(j,k); addE(i,k); }
+    }
+    return edges;
+  }
+
+  function hexToRgb(h){ return { r:(h>>16)&255, g:(h>>8)&255, b:h&255 }; }
+  function lerp(a,b,t){ return Math.round(a+(b-a)*t); }
+  function mixHex(h1,h2,t){
+    var a=hexToRgb(h1), b=hexToRgb(h2);
+    return 'rgb('+lerp(a.r,b.r,t)+','+lerp(a.g,b.g,t)+','+lerp(a.b,b.b,t)+')';
+  }
+  function ptOn(a,b,u){ return { x:a.sx+(b.sx-a.sx)*u, y:a.sy+(b.sy-a.sy)*u }; }
+
+  function init(){
+    var stage=document.getElementById('ls-stage');
+    var svg=document.getElementById('ls-edges');
+    if(!stage) return;
+
+    var NS='http://www.w3.org/2000/svg';
+    var pts=scatterVectors(NODES.length, CFG.scatterSeed, CFG.scatterMinDist, CFG.flatten);
+    var edges=buildHull(pts);
+    var reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var cards=NODES.map(function(node){
+      var card=document.createElement('div');
+      card.className='ls-card';
+      card.style.borderRadius=CFG.cardRadius+'px';
+      var logo=document.createElement('div');
+      logo.className='ls-logo';
+      logo.style.width  = (100 * ((node.w||LOGO_BASE)/LOGO_BASE)) + '%';
+      logo.style.height = (100 * ((node.h||LOGO_BASE)/LOGO_BASE)) + '%';
+      if (node.src){
+        var bust = node.src + (node.src.indexOf('?') > -1 ? '&' : '?') + 'v=' + CFG.imgVersion;
+        logo.innerHTML = '<img src="'+bust+'" alt="" ' +
+          'style="width:100%;height:100%;object-fit:cover;display:block;" ' +
+          'onerror="this.style.display=\'none\'">';
+      } else {
+        logo.innerHTML = node.logo || placeholder(node);
+      }
+      card.appendChild(logo);
+      stage.appendChild(card);
+      return { el:card, logo:logo };
+    });
+
+    var defs=document.createElementNS(NS,'defs');
+    svg.appendChild(defs);
+    var lines=edges.map(function(_,k){
+      var base=document.createElementNS(NS,'line'); base.setAttribute('class','ls-base'); base.style.stroke=CFG.baseColor;
+      var grad=document.createElementNS(NS,'linearGradient');
+      grad.setAttribute('id','lsgrad'+k);
+      grad.setAttribute('gradientUnits','userSpaceOnUse');
+      [['0','0'],['0.55','0'],['0.85','0.35'],['1','1']].forEach(function(s){
+        var st=document.createElementNS(NS,'stop');
+        st.setAttribute('offset',s[0]);
+        st.setAttribute('stop-color',CFG.pulseColor);
+        st.setAttribute('stop-opacity',s[1]);
+        grad.appendChild(st);
+      });
+      defs.appendChild(grad);
+      var glow=document.createElementNS(NS,'line'); glow.setAttribute('class','ls-glow'); glow.style.stroke='url(#lsgrad'+k+')'; glow.style.strokeWidth=CFG.pulseGlowWidth;
+      var core=document.createElementNS(NS,'line'); core.setAttribute('class','ls-core'); core.style.stroke='url(#lsgrad'+k+')'; core.style.strokeWidth=CFG.pulseWidth;
+      svg.appendChild(base); svg.appendChild(glow); svg.appendChild(core);
+      base.style.opacity=0; glow.style.opacity=0; core.style.opacity=0;
+      return { base:base, glow:glow, core:core, grad:grad, phase:0, active:false };
+    });
+
+    function activateRandom(){
+      var idle=[];
+      for (var i=0;i<lines.length;i++){ if(!lines[i].active) idle.push(i); }
+      if(!idle.length) return;
+      var pick=idle[(Math.random()*idle.length)|0];
+      lines[pick].active=true;
+      lines[pick].phase=0;
+    }
+    var seed=Math.min(CFG.activePulses, lines.length);
+    for (var s=0;s<seed;s++){ activateRandom(); }
+    lines.forEach(function(L){ if(L.active) L.phase=Math.random()*0.7; });
+
+    var W,H,cx,cy,R,cardPx;
+    function resize(){
+      var rect=stage.getBoundingClientRect();
+      W=rect.width; H=rect.height; cx=W/2; cy=H/2;
+      R=Math.min(W,H)*CFG.radius;
+      R=Math.max(CFG.minRadiusPx,Math.min(CFG.maxRadiusPx,R));
+      var pad=14;
+      var Rfit=(Math.min(W,H)/2 - pad) / (1 + CFG.cardScale/2);
+      if (Rfit>0) R=Math.min(R, Rfit);
+      cardPx=R*CFG.cardScale;
+      svg.setAttribute('viewBox','0 0 '+W+' '+H);
+      cards.forEach(function(c){ c.el.style.width=cardPx+'px'; c.el.style.height=cardPx+'px'; });
+    }
+
+    var rotX=CFG.initTiltX, rotY=0, velX=0, velY=0, dragging=false, lastX=0, lastY=0;
+    function onDown(e){ dragging=true; stage.classList.add('is-grabbing'); var p=e.touches?e.touches[0]:e; lastX=p.clientX; lastY=p.clientY; velX=velY=0; }
+    function onMove(e){ if(!dragging) return; var p=e.touches?e.touches[0]:e; var dx=p.clientX-lastX, dy=p.clientY-lastY; lastX=p.clientX; lastY=p.clientY; velY=dx*CFG.dragSensitivity; velX=dy*CFG.dragSensitivity; rotY+=velY; rotX+=velX; if(e.cancelable) e.preventDefault(); }
+    function onUp(){ dragging=false; stage.classList.remove('is-grabbing'); }
+    stage.addEventListener('mousedown',onDown);
+    window.addEventListener('mousemove',onMove);
+    window.addEventListener('mouseup',onUp);
+    stage.addEventListener('touchstart',onDown,{passive:true});
+    window.addEventListener('touchmove',onMove,{passive:false});
+    window.addEventListener('touchend',onUp);
+    window.addEventListener('resize',resize);
+
+    function frame(){
+      if(!dragging){
+        rotY+=(reduce?0:CFG.autoRotateSpeed);
+        rotY+=velY; rotX+=velX;
+        velX*=CFG.friction; velY*=CFG.friction;
+      }
+      var cY=Math.cos(rotY), sY=Math.sin(rotY), cX=Math.cos(rotX), sX=Math.sin(rotX);
+
+      var proj=pts.map(function(p){
+        var X=p.ux*R, Y=p.uy*R, Z=p.uz*R;
+        var x1=X*cY+Z*sY;
+        var z1=-X*sY+Z*cY;
+        var y2=Y*cX-z1*sX;
+        var z2=Y*sX+z1*cX;
+        return { sx:cx+x1, sy:cy+y2, depth:z2 };
+      });
+
+      var order=proj.map(function(_,i){return i;}).sort(function(a,b){return proj[a].depth-proj[b].depth;});
+      order.forEach(function(i,rank){ cards[i].el.style.zIndex=rank+1; });
+
+      var dmin=Infinity, dmax=-Infinity;
+      for (var q=0;q<proj.length;q++){ if(proj[q].depth<dmin)dmin=proj[q].depth; if(proj[q].depth>dmax)dmax=proj[q].depth; }
+      var dspan=(dmax-dmin)||1;
+      function depthT(d){ return (d-dmin)/dspan; }
+
+      proj.forEach(function(p,i){
+        var t=depthT(p.depth);
+        var scale=CFG.minScale+(1-CFG.minScale)*t;
+        var c=cards[i];
+        c.el.style.transform='translate('+p.sx+'px,'+p.sy+'px) translate(-50%,-50%) scale('+scale+')';
+        c.el.style.backgroundColor=mixHex(CFG.backTint,CFG.frontTint,t);
+        var sh=CFG.shadowStrength*t;
+        c.el.style.boxShadow='0 '+(10*t).toFixed(1)+'px '+(28*t).toFixed(1)+'px rgba(0,0,0,'+sh.toFixed(3)+')';
+        c.logo.style.filter='grayscale('+Math.round(CFG.backDesat*(1-t)*100)+'%)';
+      });
+
+      edges.forEach(function(e,k){
+        var a=proj[e[0]], b=proj[e[1]], L=lines[k];
+        var td=depthT((a.depth+b.depth)/2);
+        L.base.setAttribute('x1',a.sx); L.base.setAttribute('y1',a.sy);
+        L.base.setAttribute('x2',b.sx); L.base.setAttribute('y2',b.sy);
+        L.base.style.opacity=(CFG.baseMinOpacity+(CFG.baseMaxOpacity-CFG.baseMinOpacity)*td).toFixed(3);
+        if(!L.active){ L.glow.style.opacity=0; L.core.style.opacity=0; return; }
+        L.phase += CFG.pulseSpeed;
+        if(L.phase>=1){ L.active=false; L.glow.style.opacity=0; L.core.style.opacity=0; activateRandom(); return; }
+        var head=L.phase, tail=Math.max(0, head-CFG.pulseLength);
+        var h=ptOn(a,b,head), tp=ptOn(a,b,tail);
+        [L.glow,L.core].forEach(function(seg){
+          seg.setAttribute('x1',tp.x); seg.setAttribute('y1',tp.y);
+          seg.setAttribute('x2',h.x);  seg.setAttribute('y2',h.y);
+        });
+        L.grad.setAttribute('x1',tp.x); L.grad.setAttribute('y1',tp.y);
+        L.grad.setAttribute('x2',h.x);  L.grad.setAttribute('y2',h.y);
+        L.core.style.opacity=(0.95*td).toFixed(3);
+        L.glow.style.opacity=(CFG.pulseGlowOpacity*td).toFixed(3);
+      });
+
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    frame();
+  }
+
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',init); }
+  else { init(); }
+})();
+</script>
+
+</body>
+</html>
