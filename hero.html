@@ -24,13 +24,13 @@
 
 <script>
 const NODES = [
-  { id:'energy',    label:'ENERGY',        w:150, h:150, cx:255,  cy:230, ax:10, ay:16, sp:6.0, ph:0.0 },
-  { id:'infra',     label:'INFRASTRUCTURE',w:175, h:165, cx:660,  cy:304, ax:14, ay:8,  sp:7.2, ph:1.1 },
-  { id:'insurance', label:'INSURANCE',     w:175, h:165, cx:297,  cy:702, ax:16, ay:10, sp:7.5, ph:2.3 },
-  { id:'health',    label:'HEALTH',        w:150, h:140, cx:1305, cy:180, ax:9,  ay:14, sp:6.6, ph:0.7 },
-  { id:'consumer',  label:'CONSUMER',      w:150, h:150, cx:1635, cy:325, ax:15, ay:9,  sp:8.0, ph:3.1 },
-  { id:'life',      label:'LIFE SCIENCE',  w:160, h:150, cx:1010, cy:825, ax:11, ay:13, sp:7.0, ph:1.8 },
-  { id:'retail',    label:'RETAIL',        w:150, h:150, cx:1725, cy:735, ax:12, ay:12, sp:8.5, ph:0.4 },
+  { id:'energy',    label:'ENERGY',        w:150, h:150, lcx:255,  lcy:230, pcx:360, pcy:1520, ax:10, ay:16, sp:6.0, ph:0.0 },
+  { id:'infra',     label:'INFRASTRUCTURE',w:175, h:165, lcx:660,  lcy:304, pcx:640, pcy:1360, ax:14, ay:8,  sp:7.2, ph:1.1 },
+  { id:'insurance', label:'INSURANCE',     w:175, h:165, lcx:297,  lcy:702, pcx:155, pcy:1300, ax:16, ay:10, sp:7.5, ph:2.3 },
+  { id:'health',    label:'HEALTH',        w:150, h:140, lcx:1305, lcy:180, pcx:320, pcy:330,  ax:9,  ay:14, sp:6.6, ph:0.7 },
+  { id:'consumer',  label:'CONSUMER',      w:150, h:150, lcx:1635, lcy:325, pcx:655, pcy:400,  ax:15, ay:9,  sp:8.0, ph:3.1 },
+  { id:'life',      label:'LIFE SCIENCE',  w:160, h:150, lcx:1010, lcy:825, pcx:150, pcy:210,  ax:11, ay:13, sp:7.0, ph:1.8 },
+  { id:'retail',    label:'RETAIL',        w:150, h:150, lcx:1725, lcy:735, pcx:560, pcy:195,  ax:12, ay:12, sp:8.5, ph:0.4 },
 ];
 const LINKS = [
   ['energy','infra'], ['infra','insurance'], ['energy','insurance'],
@@ -42,7 +42,7 @@ const MODNAME = {
 };
 const BRANCH_OFF = [{x:-140,y:-80},{x:10,y:-125},{x:155,y:-70},{x:-170,y:25}];
 const SVGNS = 'http://www.w3.org/2000/svg';
-const STAGE_W = 1900, STAGE_H = 960;
+let stageW = 1900, stageH = 960;
 
 const root = document.getElementById('root');
 const host = document.getElementById('host');
@@ -55,7 +55,7 @@ const boxEls = {};
 NODES.forEach(n => {
   const el = document.createElement('div');
   el.setAttribute('data-node', n.id);
-  el.style.cssText = `position:absolute;left:${n.cx-n.w/2}px;top:${n.cy-n.h/2}px;width:${n.w}px;height:${n.h}px;will-change:transform;`;
+  el.style.cssText = `position:absolute;left:0;top:0;width:${n.w}px;height:${n.h}px;will-change:transform;`;
   el.innerHTML = `<div style="position:relative;width:100%;height:100%;border-radius:20px;background:#2a2838;">
     <div style="position:absolute;top:14px;left:14px;font-size:11px;letter-spacing:1px;color:#f2f2f2;">${n.label}</div>
   </div>`;
@@ -95,19 +95,42 @@ const branches = BRANCH_OFF.map(() => {
 // ===================================================================
 const SHOW_HOVER = false;
 
-let hovered = null, dragActive = false, scale = 1;
+let hovered = null, dragActive = false, scale = 1, curPortrait = null;
 
-// scale stage to host
+// lay the squares out for the current orientation (landscape spread vs. portrait stack)
+function applyLayout(portrait) {
+  stageW = portrait ? 800 : 1900;
+  stageH = portrait ? 1720 : 960;
+  root.style.width = stageW + 'px';
+  root.style.height = stageH + 'px';
+  svg.setAttribute('width', stageW);
+  svg.setAttribute('height', stageH);
+  NODES.forEach(n => {
+    n.cx = portrait ? n.pcx : n.lcx;
+    n.cy = portrait ? n.pcy : n.lcy;
+    const el = boxEls[n.id];
+    el.style.left = (n.cx - n.w/2) + 'px';
+    el.style.top  = (n.cy - n.h/2) + 'px';
+  });
+}
+
+// scale the stage to the host; hide entirely in mobile landscape
 function applyScale() {
   const cw = host.clientWidth, ch = host.clientHeight;
-  scale = Math.min(cw / STAGE_W, ch / STAGE_H);
-  const ox = (cw - STAGE_W * scale) / 2;
-  const oy = (ch - STAGE_H * scale) / 2;
+  const isMobileLandscape = window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
+  if (isMobileLandscape) { root.style.display = 'none'; return; }
+  root.style.display = '';
+  const portrait = cw / ch < 1;
+  if (portrait !== curPortrait) { curPortrait = portrait; applyLayout(portrait); }
+  scale = Math.min(cw / stageW, ch / stageH);
+  const ox = (cw - stageW * scale) / 2;
+  const oy = (ch - stageH * scale) / 2;
   root.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
 }
 applyScale();
 new ResizeObserver(applyScale).observe(host);
 window.addEventListener('resize', applyScale);
+window.addEventListener('orientationchange', applyScale);
 
 // drag
 NODES.forEach(n => {
