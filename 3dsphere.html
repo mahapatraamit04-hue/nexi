@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>html,body{margin:0;padding:0;background:#fff;}</style>
+<style>html,body{margin:0;padding:0;height:100%;background:#fff;}</style>
 </head>
 <body>
 
@@ -15,8 +15,8 @@
   #ls-stage{
     position:relative;
     width:100%;
-    height:100vh;
-    height:100svh;
+    height:100%;
+    min-height:100svh;
     overflow:hidden;
     cursor:grab;
     touch-action:none;
@@ -55,11 +55,6 @@
     will-change:filter, opacity;
   }
   .ls-card .ls-logo svg{ width:100%; height:100%; }
-
-  /* MOBILE: contain the sphere in a fixed-height box instead of full screen */
-  @media (max-width: 600px){
-    #ls-stage{ height:430px; }
-  }
 </style>
 
 <script>
@@ -72,7 +67,7 @@
     radius: 0.42,
     flatten: 1.0,
     minRadiusPx: 150,
-    maxRadiusPx: 360,
+    maxRadiusPx: 700,
     cardScale: 0.4216,
     cardRadius: 16,
     minScale: 0.56,
@@ -255,11 +250,10 @@
       W=rect.width; H=rect.height; cx=W/2; cy=H/2;
       R=Math.min(W,H)*CFG.radius;
       R=Math.max(CFG.minRadiusPx,Math.min(CFG.maxRadiusPx,R));
-      // on mobile, trim the reserved margin so the sphere renders ~5% larger,
-      // while the fit clamp still guarantees it never bleeds past the edges.
-      var isMobile = W <= 600;
-      var pad     = isMobile ? 10 : 14;
-      var reserve = isMobile ? 0.155 : (CFG.cardScale/2);
+      // trim the reserved margin so the sphere fills its box generously;
+      // the fit clamp below still guarantees it never bleeds past the edges.
+      var pad     = 10;
+      var reserve = 0.155;
       var Rfit=(Math.min(W,H)/2 - pad) / (1 + reserve);
       if (Rfit>0) R=Math.min(R, Rfit);
       cardPx=R*CFG.cardScale;
