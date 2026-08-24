@@ -27,13 +27,13 @@
 // stage edge (about 20px on a typical phone). insurance + infra are pulled in
 // slightly more since they drift the most, so they stay off the edge mid-motion.
 const NODES = [
-  { id:'energy',    label:'ENERGY',        w:150, h:150, lcx:255,  lcy:230, pcx:400, pcy:1520, ax:10, ay:16, sp:6.0, ph:0.0 },
-  { id:'infra',     label:'INFRASTRUCTURE',w:175, h:165, lcx:660,  lcy:304, pcx:672, pcy:1360, ax:14, ay:8,  sp:7.2, ph:1.1 },
-  { id:'insurance', label:'INSURANCE',     w:175, h:165, lcx:297,  lcy:702, pcx:144, pcy:1300, ax:16, ay:10, sp:7.5, ph:2.3 },
-  { id:'health',    label:'HEALTH',        w:150, h:140, lcx:1305, lcy:180, pcx:390, pcy:490,  ax:9,  ay:14, sp:6.6, ph:0.7 },
-  { id:'consumer',  label:'CONSUMER',      w:150, h:150, lcx:1635, lcy:325, pcx:685, pcy:400,  ax:15, ay:9,  sp:8.0, ph:3.1 },
-  { id:'life',      label:'LIFE SCIENCE',  w:160, h:150, lcx:1010, lcy:825, pcx:120, pcy:210,  ax:11, ay:13, sp:7.0, ph:1.8 },
-  { id:'retail',    label:'RETAIL',        w:150, h:150, lcx:1725, lcy:735, pcx:590, pcy:195,  ax:12, ay:12, sp:8.5, ph:0.4 },
+  { id:'energy',    label:'SUPPORT AGENTS',        w:150, h:150, lcx:255,  lcy:230, pcx:400, pcy:1520, ax:10, ay:16, sp:6.0, ph:0.0 },
+  { id:'infra',     label:'VOICE AGENTS',w:175, h:165, lcx:660,  lcy:304, pcx:672, pcy:1360, ax:14, ay:8,  sp:7.2, ph:1.1 },
+  { id:'insurance', label:'DOCUMENT INTELLIGENCE',     w:175, h:165, lcx:297,  lcy:702, pcx:144, pcy:1300, ax:16, ay:10, sp:7.5, ph:2.3 },
+  { id:'health',    label:'KNOWLEDGE SEARCH',        w:150, h:140, lcx:1305, lcy:180, pcx:390, pcy:490,  ax:9,  ay:14, sp:6.6, ph:0.7 },
+  { id:'consumer',  label:'PROCESS AUTOMATION',      w:150, h:150, lcx:1635, lcy:325, pcx:685, pcy:400,  ax:15, ay:9,  sp:8.0, ph:3.1 },
+  { id:'life',      label:'OPS COPILOTS',  w:160, h:150, lcx:1010, lcy:825, pcx:120, pcy:210,  ax:11, ay:13, sp:7.0, ph:1.8 },
+  { id:'retail',    label:'SELF-SERVE ANALYTICS',        w:150, h:150, lcx:1725, lcy:735, pcx:590, pcy:195,  ax:12, ay:12, sp:8.5, ph:0.4 },
 ];
 const LINKS = [
   ['energy','infra'], ['infra','insurance'], ['energy','insurance'],
@@ -42,6 +42,25 @@ const LINKS = [
 const MODNAME = {
   energy:'Grid Load Forecasting', infra:'Predictive Maintenance', insurance:'Claims Automation',
   health:'Clinical Diagnostics', consumer:'Demand Forecasting', life:'Drug Discovery', retail:'Inventory Optimization',
+};
+// minimal line icons, 2px stroke in a 24px grid. stroke inherits the box
+// text color via currentColor, and scales with the stage like everything else.
+const svgIcon = (inner) => `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+const ICONS = {
+  // SUPPORT AGENTS — headset
+  energy:    svgIcon('<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2" y="13.5" width="4.5" height="6.5" rx="2"/><rect x="17.5" y="13.5" width="4.5" height="6.5" rx="2"/><path d="M19.5 20a3 3 0 0 1-3 3H13"/>'),
+  // VOICE AGENTS — microphone
+  infra:     svgIcon('<rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>'),
+  // DOCUMENT INTELLIGENCE — page with lines
+  insurance: svgIcon('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><line x1="8.5" y1="13" x2="15.5" y2="13"/><line x1="8.5" y1="16.5" x2="15.5" y2="16.5"/>'),
+  // KNOWLEDGE SEARCH — magnifier
+  health:    svgIcon('<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/>'),
+  // PROCESS AUTOMATION — looped arrows
+  consumer:  svgIcon('<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><polyline points="21 3 21 8 16 8"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><polyline points="3 21 3 16 8 16"/>'),
+  // OPS COPILOTS — robot head
+  life:      svgIcon('<rect x="4" y="8" width="16" height="12" rx="3"/><line x1="12" y1="4" x2="12" y2="8"/><circle cx="12" cy="3.5" r="1.2"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><line x1="9.5" y1="16.5" x2="14.5" y2="16.5"/>'),
+  // SELF-SERVE ANALYTICS — bar chart
+  retail:    svgIcon('<line x1="3" y1="20" x2="21" y2="20"/><rect x="5" y="10" width="3.5" height="10"/><rect x="10.5" y="6" width="3.5" height="14"/><rect x="16" y="13" width="3.5" height="7"/>'),
 };
 const BRANCH_OFF = [{x:-140,y:-80},{x:10,y:-125},{x:155,y:-70},{x:-170,y:25}];
 const SVGNS = 'http://www.w3.org/2000/svg';
@@ -59,8 +78,8 @@ NODES.forEach(n => {
   const el = document.createElement('div');
   el.setAttribute('data-node', n.id);
   el.style.cssText = `position:absolute;left:0;top:0;width:${n.w}px;height:${n.h}px;will-change:transform;`;
-  el.innerHTML = `<div style="position:relative;width:100%;height:100%;border-radius:20px;background:#2a2838;">
-    <div style="position:absolute;top:14px;left:14px;font-size:11px;letter-spacing:1px;color:#f2f2f2;">${n.label}</div>
+  el.innerHTML = `<div style="position:relative;width:100%;height:100%;border-radius:20px;background:#2a2838;overflow:hidden;">
+    <div style="position:absolute;top:14px;left:14px;right:14px;font-size:11px;line-height:1.3;letter-spacing:1px;color:#f2f2f2;">${n.label}</div>
   </div>`;
   root.appendChild(el);
   boxEls[n.id] = el;
