@@ -23,14 +23,17 @@
 </div>
 
 <script>
+// pcx values updated for mobile: outer boxes now sit ~40 stage units from the
+// stage edge (about 20px on a typical phone). insurance + infra are pulled in
+// slightly more since they drift the most, so they stay off the edge mid-motion.
 const NODES = [
-  { id:'energy',    label:'ENERGY',        w:150, h:150, lcx:255,  lcy:230, pcx:360, pcy:1520, ax:10, ay:16, sp:6.0, ph:0.0 },
-  { id:'infra',     label:'INFRASTRUCTURE',w:175, h:165, lcx:660,  lcy:304, pcx:640, pcy:1360, ax:14, ay:8,  sp:7.2, ph:1.1 },
-  { id:'insurance', label:'INSURANCE',     w:175, h:165, lcx:297,  lcy:702, pcx:155, pcy:1300, ax:16, ay:10, sp:7.5, ph:2.3 },
-  { id:'health',    label:'HEALTH',        w:150, h:140, lcx:1305, lcy:180, pcx:320, pcy:330,  ax:9,  ay:14, sp:6.6, ph:0.7 },
-  { id:'consumer',  label:'CONSUMER',      w:150, h:150, lcx:1635, lcy:325, pcx:655, pcy:400,  ax:15, ay:9,  sp:8.0, ph:3.1 },
-  { id:'life',      label:'LIFE SCIENCE',  w:160, h:150, lcx:1010, lcy:825, pcx:150, pcy:210,  ax:11, ay:13, sp:7.0, ph:1.8 },
-  { id:'retail',    label:'RETAIL',        w:150, h:150, lcx:1725, lcy:735, pcx:560, pcy:195,  ax:12, ay:12, sp:8.5, ph:0.4 },
+  { id:'energy',    label:'ENERGY',        w:150, h:150, lcx:255,  lcy:230, pcx:400, pcy:1520, ax:10, ay:16, sp:6.0, ph:0.0 },
+  { id:'infra',     label:'INFRASTRUCTURE',w:175, h:165, lcx:660,  lcy:304, pcx:672, pcy:1360, ax:14, ay:8,  sp:7.2, ph:1.1 },
+  { id:'insurance', label:'INSURANCE',     w:175, h:165, lcx:297,  lcy:702, pcx:144, pcy:1300, ax:16, ay:10, sp:7.5, ph:2.3 },
+  { id:'health',    label:'HEALTH',        w:150, h:140, lcx:1305, lcy:180, pcx:390, pcy:490,  ax:9,  ay:14, sp:6.6, ph:0.7 },
+  { id:'consumer',  label:'CONSUMER',      w:150, h:150, lcx:1635, lcy:325, pcx:685, pcy:400,  ax:15, ay:9,  sp:8.0, ph:3.1 },
+  { id:'life',      label:'LIFE SCIENCE',  w:160, h:150, lcx:1010, lcy:825, pcx:120, pcy:210,  ax:11, ay:13, sp:7.0, ph:1.8 },
+  { id:'retail',    label:'RETAIL',        w:150, h:150, lcx:1725, lcy:735, pcx:590, pcy:195,  ax:12, ay:12, sp:8.5, ph:0.4 },
 ];
 const LINKS = [
   ['energy','infra'], ['infra','insurance'], ['energy','insurance'],
