@@ -117,13 +117,19 @@ function applyLayout(portrait) {
   });
 }
 
+// below this viewport width, use the stacked "portrait" phone layout;
+// at or above it, use the landscape spread. this replaces the old
+// aspect-ratio trigger (cw / ch < 1), which wrongly flipped to portrait
+// whenever the hero was taller than wide, even on desktop.
+const PORTRAIT_MAX_WIDTH = 768;
+
 // scale the stage to the host; hide entirely in mobile landscape
 function applyScale() {
   const cw = host.clientWidth, ch = host.clientHeight;
   const isMobileLandscape = window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
   if (isMobileLandscape) { root.style.display = 'none'; return; }
   root.style.display = '';
-  const portrait = cw / ch < 1;
+  const portrait = window.innerWidth < PORTRAIT_MAX_WIDTH;
   if (portrait !== curPortrait) { curPortrait = portrait; applyLayout(portrait); }
   scale = Math.min(cw / stageW, ch / stageH);
   const ox = (cw - stageW * scale) / 2;
