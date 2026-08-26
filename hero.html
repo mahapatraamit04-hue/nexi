@@ -23,9 +23,6 @@
 </div>
 
 <script>
-// pcx values updated for mobile: outer boxes now sit ~40 stage units from the
-// stage edge (about 20px on a typical phone). insurance + infra are pulled in
-// slightly more since they drift the most, so they stay off the edge mid-motion.
 const NODES = [
   { id:'energy',    label:'SUPPORT AGENTS',        w:150, h:150, lcx:255,  lcy:230, pcx:400, pcy:1520, ax:10, ay:16, sp:6.0, ph:0.0 },
   { id:'infra',     label:'VOICE AGENTS',w:175, h:165, lcx:660,  lcy:304, pcx:672, pcy:1360, ax:14, ay:8,  sp:7.2, ph:1.1 },
@@ -43,23 +40,14 @@ const MODNAME = {
   energy:'Grid Load Forecasting', infra:'Predictive Maintenance', insurance:'Claims Automation',
   health:'Clinical Diagnostics', consumer:'Demand Forecasting', life:'Drug Discovery', retail:'Inventory Optimization',
 };
-// minimal line icons, 2px stroke in a 24px grid. stroke inherits the box
-// text color via currentColor, and scales with the stage like everything else.
 const svgIcon = (inner) => `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 const ICONS = {
-  // SUPPORT AGENTS — headset
   energy:    svgIcon('<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2" y="13.5" width="4.5" height="6.5" rx="2"/><rect x="17.5" y="13.5" width="4.5" height="6.5" rx="2"/><path d="M19.5 20a3 3 0 0 1-3 3H13"/>'),
-  // VOICE AGENTS — microphone
   infra:     svgIcon('<rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>'),
-  // DOCUMENT INTELLIGENCE — page with lines
   insurance: svgIcon('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><line x1="8.5" y1="13" x2="15.5" y2="13"/><line x1="8.5" y1="16.5" x2="15.5" y2="16.5"/>'),
-  // KNOWLEDGE SEARCH — magnifier
   health:    svgIcon('<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/>'),
-  // PROCESS AUTOMATION — looped arrows
   consumer:  svgIcon('<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><polyline points="21 3 21 8 16 8"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><polyline points="3 21 3 16 8 16"/>'),
-  // OPS COPILOTS — robot head
   life:      svgIcon('<rect x="4" y="8" width="16" height="12" rx="3"/><line x1="12" y1="4" x2="12" y2="8"/><circle cx="12" cy="3.5" r="1.2"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><line x1="9.5" y1="16.5" x2="14.5" y2="16.5"/>'),
-  // SELF-SERVE ANALYTICS — bar chart
   retail:    svgIcon('<line x1="3" y1="20" x2="21" y2="20"/><rect x="5" y="10" width="3.5" height="10"/><rect x="10.5" y="6" width="3.5" height="14"/><rect x="16" y="13" width="3.5" height="7"/>'),
 };
 const BRANCH_OFF = [{x:-140,y:-80},{x:10,y:-125},{x:155,y:-70},{x:-170,y:25}];
@@ -109,17 +97,10 @@ const branches = BRANCH_OFF.map(() => {
   return { line, pill };
 });
 
-// ===================================================================
-// HOVER INTERACTIONS ARE CURRENTLY HIDDEN.
-// The hover module pills (e.g. Health -> Clinical Diagnostics) and
-// their connector branches are disabled via the flag below.
-// To bring them back later, set SHOW_HOVER = true.
-// ===================================================================
 const SHOW_HOVER = false;
 
 let hovered = null, dragActive = false, scale = 1, curPortrait = null;
 
-// lay the squares out for the current orientation (landscape spread vs. portrait stack)
 function applyLayout(portrait) {
   stageW = portrait ? 800 : 1900;
   stageH = portrait ? 1720 : 960;
@@ -136,13 +117,8 @@ function applyLayout(portrait) {
   });
 }
 
-// below this viewport width, use the stacked "portrait" phone layout;
-// at or above it, use the landscape spread. this replaces the old
-// aspect-ratio trigger (cw / ch < 1), which wrongly flipped to portrait
-// whenever the hero was taller than wide, even on desktop.
 const PORTRAIT_MAX_WIDTH = 768;
 
-// scale the stage to the host; hide entirely in mobile landscape
 function applyScale() {
   const cw = host.clientWidth, ch = host.clientHeight;
   const isMobileLandscape = window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
@@ -160,7 +136,8 @@ new ResizeObserver(applyScale).observe(host);
 window.addEventListener('resize', applyScale);
 window.addEventListener('orientationchange', applyScale);
 
-// drag
+// ── drag (fixed: uses setPointerCapture so the iframe keeps receiving
+//    events even when the cursor crosses over a Webflow overlay div) ──
 NODES.forEach(n => {
   const el = boxEls[n.id];
   el.style.cursor = 'grab'; el.style.touchAction = 'none';
@@ -170,19 +147,68 @@ NODES.forEach(n => {
     const r = root.getBoundingClientRect();
     return { x:(e.clientX-r.left)/scale, y:(e.clientY-r.top)/scale };
   };
-  let start=null, startOff=null;
-  const onMove = (e) => { if(!n.dragging) return; const p=local(e); n.dragOff={x:startOff.x+(p.x-start.x), y:startOff.y+(p.y-start.y)}; };
-  const onUp = () => {
-    if(!n.dragging) return;
-    n.dragging=false; dragActive=false; n.residual={x:n.dragOff.x,y:n.dragOff.y}; el.style.cursor='grab';
-    window.removeEventListener('pointermove',onMove); window.removeEventListener('pointerup',onUp);
+  let start=null, startOff=null, pointerId=null;
+
+  const onMove = (e) => {
+    if (!n.dragging) return;
+    const p = local(e);
+    n.dragOff = { x: startOff.x + (p.x - start.x), y: startOff.y + (p.y - start.y) };
   };
+
+  const onUp = (e) => {
+    if (!n.dragging) return;
+    n.dragging = false;
+    dragActive = false;
+    n.residual = { x: n.dragOff.x, y: n.dragOff.y };
+    el.style.cursor = 'grab';
+    // release capture safely
+    if (pointerId != null) {
+      try { el.releasePointerCapture(pointerId); } catch(_) {}
+      pointerId = null;
+    }
+    el.removeEventListener('pointermove', onMove);
+    el.removeEventListener('pointerup', onUp);
+  };
+
+  // safety: if capture is lost unexpectedly (e.g. browser kills it),
+  // treat it exactly like pointerup so the square snaps back
+  el.addEventListener('lostpointercapture', () => {
+    if (n.dragging) onUp();
+  });
+
   el.addEventListener('pointerdown', (e) => {
-    n.dragging=true; dragActive=true; hovered=null;
-    start=local(e); startOff={x:n.residual.x,y:n.residual.y}; n.dragOff={x:n.residual.x,y:n.residual.y};
-    el.style.cursor='grabbing';
-    window.addEventListener('pointermove',onMove); window.addEventListener('pointerup',onUp);
+    n.dragging = true;
+    dragActive = true;
+    hovered = null;
+    start = local(e);
+    startOff = { x: n.residual.x, y: n.residual.y };
+    n.dragOff = { x: n.residual.x, y: n.residual.y };
+    el.style.cursor = 'grabbing';
+
+    // ── KEY FIX: capture the pointer so all future move/up events
+    //    route to this element, even if the cursor leaves the iframe
+    //    and enters a Webflow overlay div on top ──
+    pointerId = e.pointerId;
+    el.setPointerCapture(e.pointerId);
+
+    // listen on the element (not window) — capture routes events here
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerup', onUp);
+
     e.preventDefault();
+  });
+});
+
+// extra safety: if the pointer leaves the document entirely (e.g. user
+// alt-tabs or moves outside the browser), release any stuck drag
+document.addEventListener('pointerleave', () => {
+  NODES.forEach(n => {
+    if (n.dragging) {
+      n.dragging = false;
+      dragActive = false;
+      n.residual = { x: n.dragOff.x, y: n.dragOff.y };
+      boxEls[n.id].style.cursor = 'grab';
+    }
   });
 });
 
