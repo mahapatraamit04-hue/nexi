@@ -24,9 +24,9 @@
 
 <script>
 const NODES = [
-  { id:'energy',    label:'SUPPORT AGENTS',        w:150, h:150, lcx:255,  lcy:230, pcx:400, pcy:1520, ax:10, ay:16, sp:6.0, ph:0.0 },
+  { id:'energy',    label:'SUPPORT AGENTS',        w:150, h:150, lcx:297,  lcy:702, pcx:144, pcy:1300, ax:10, ay:16, sp:6.0, ph:0.0 },
   { id:'infra',     label:'VOICE AGENTS',w:175, h:165, lcx:660,  lcy:304, pcx:672, pcy:1360, ax:14, ay:8,  sp:7.2, ph:1.1 },
-  { id:'insurance', label:'DOCUMENT INTELLIGENCE',     w:175, h:165, lcx:297,  lcy:702, pcx:144, pcy:1300, ax:16, ay:10, sp:7.5, ph:2.3 },
+  { id:'insurance', label:'DOCUMENT INTELLIGENCE',     w:175, h:165, lcx:255,  lcy:230, pcx:400, pcy:1520, ax:16, ay:10, sp:7.5, ph:2.3 },
   { id:'health',    label:'KNOWLEDGE SEARCH',        w:150, h:140, lcx:1305, lcy:180, pcx:390, pcy:490,  ax:9,  ay:14, sp:6.6, ph:0.7 },
   { id:'consumer',  label:'PROCESS AUTOMATION',      w:150, h:150, lcx:1635, lcy:325, pcx:685, pcy:400,  ax:15, ay:9,  sp:8.0, ph:3.1 },
   { id:'life',      label:'OPS COPILOTS',  w:160, h:150, lcx:1010, lcy:825, pcx:120, pcy:210,  ax:11, ay:13, sp:7.0, ph:1.8 },
@@ -35,6 +35,7 @@ const NODES = [
 const LINKS = [
   ['energy','infra'], ['infra','insurance'], ['energy','insurance'],
   ['health','consumer'], ['consumer','retail'], ['life','retail'], ['health','life'], ['infra','health'],
+  ['energy','life'],
 ];
 const MODNAME = {
   energy:'Grid Load Forecasting', infra:'Predictive Maintenance', insurance:'Claims Automation',
@@ -66,8 +67,19 @@ NODES.forEach(n => {
   const el = document.createElement('div');
   el.setAttribute('data-node', n.id);
   el.style.cssText = `position:absolute;left:0;top:0;width:${n.w}px;height:${n.h}px;will-change:transform;`;
+  // Voice Agents gets a canvas for the particle sphere, Support Agents gets the atom orbits,
+  // Document Intelligence gets the roving-cluster grid, Knowledge Search gets the 3D dotted globe
+  let extraHTML = '';
+  if (n.id === 'infra') extraHTML = '<canvas id="sphereCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
+  if (n.id === 'energy') extraHTML = '<canvas id="atomCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
+  if (n.id === 'insurance') extraHTML = '<canvas id="gridCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
+  if (n.id === 'health') extraHTML = '<canvas id="knowledgeCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
+  if (n.id === 'consumer') extraHTML = '<canvas id="processCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
+  if (n.id === 'life') extraHTML = '<canvas id="amoebaCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
+  if (n.id === 'retail') extraHTML = '<canvas id="orbitsCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
   el.innerHTML = `<div style="position:relative;width:100%;height:100%;border-radius:20px;background:#2a2838;overflow:hidden;">
-    <div style="position:absolute;top:14px;left:14px;right:14px;font-size:11px;line-height:1.3;letter-spacing:1px;color:#f2f2f2;">${n.label}</div>
+    <div style="position:absolute;top:14px;left:14px;right:14px;font-size:11px;line-height:1.3;letter-spacing:1px;color:#f2f2f2;z-index:2;">${n.label}</div>
+    ${extraHTML}
   </div>`;
   root.appendChild(el);
   boxEls[n.id] = el;
@@ -253,6 +265,1025 @@ function tick(t) {
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
+
+// ── Particle sphere inside the Voice Agents box ──
+(function initSphere() {
+  const sc = document.getElementById('sphereCanvas');
+  if (!sc) return;
+  const sctx = sc.getContext('2d');
+  const TAU = Math.PI * 2;
+  const CFG = {
+    ACROSS: 11, SPHERE: 0.7, ELLIPSE: 0.95,
+    MIN_SIZE: 0.2, MAX_SIZE: 5, FALLOFF: 1.8,
+    LOBE: 2.5, RINGS: 1, PULSES: 2,
+    DEPTH_OPACITY: 0.25, LOOP_DURATION: 6000,
+    PHASE: 0.40,   // rest frame
+    EDGE_FADE: 0.35 // outer 35% of radius fades to transparent
+  };
+
+  // bg color components for blending (card bg #2a2838)
+  const BG_R = 42, BG_G = 40, BG_B = 56;
+  // dot highlight color — soft lavender-grey, not white
+  const DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  let sw = 0, sh = 0;
+  function sResize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const r = sc.getBoundingClientRect();
+    sw = r.width; sh = r.height;
+    sc.width = Math.round(sw * dpr);
+    sc.height = Math.round(sh * dpr);
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  sResize();
+  new ResizeObserver(sResize).observe(sc);
+
+  function sphereFrame(now) {
+    requestAnimationFrame(sphereFrame);
+    const c = CFG;
+    const st = (now % c.LOOP_DURATION) / c.LOOP_DURATION;
+
+    const T = TAU * st * c.PULSES;
+    const R = Math.min(sw, sh) * c.SPHERE;
+    const S = (R * 2) / c.ACROSS;
+    const rowH = S * 0.8660254;
+    const rows = Math.ceil((R * c.ELLIPSE) / rowH) + 1;
+    const cols = Math.ceil(R / S) + 1;
+    const cx = sw * 0.78, cy = sh - R * c.ELLIPSE * 0.45;
+
+    sctx.clearRect(0, 0, sw, sh);
+
+    for (let j = -rows; j <= rows; j++) {
+      const y = j * rowH;
+      const off = (j & 1) ? S * 0.5 : 0;
+      for (let i = -cols; i <= cols; i++) {
+        const x = i * S + off;
+        const ax = Math.abs(x) / R, ay = Math.abs(y / c.ELLIPSE) / R;
+        const u = Math.max(ay, ay * 0.5 + ax * 0.8660254);
+        if (u > 1) continue;
+        const ur = Math.min(1, Math.hypot(x, y / c.ELLIPSE) / R);
+        const nz = Math.sqrt(Math.max(0, 1 - ur * ur));
+        const arc = 1 - nz;
+        const wave = 0.5 - 0.5 * Math.cos(T - arc * TAU * c.RINGS);
+        const lobe = Math.pow(wave, c.LOBE);
+        const fall = Math.pow(1 - u * u, c.FALLOFF);
+        const s = c.MIN_SIZE + (c.MAX_SIZE - c.MIN_SIZE) * fall * lobe;
+        if (s <= 0.1) continue;
+
+        const shade = fall * (0.4 + 0.6 * lobe);
+        // blend dot color toward BG based on shade
+        const mix = Math.pow(shade, 0.5);
+        const r = Math.round(BG_R + (DOT_R - BG_R) * mix);
+        const g = Math.round(BG_G + (DOT_G - BG_G) * mix);
+        const b = Math.round(BG_B + (DOT_B - BG_B) * mix);
+
+        // edge fade: particles near the rim dissolve to transparent
+        const edgeFade = u > (1 - c.EDGE_FADE)
+          ? 1 - (u - (1 - c.EDGE_FADE)) / c.EDGE_FADE
+          : 1;
+        const alpha = Math.min(1, ((1 - c.DEPTH_OPACITY) + c.DEPTH_OPACITY * mix + 0.3)) * edgeFade;
+
+        sctx.globalAlpha = alpha;
+        sctx.fillStyle = `rgb(${r},${g},${b})`;
+        sctx.beginPath();
+        sctx.arc(cx + x, cy + y, s * 0.5, 0, TAU);
+        sctx.fill();
+      }
+    }
+    sctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(sphereFrame);
+})();
+
+// ── Atom orbits inside the Support Agents box ──
+(function initAtom() {
+  var ac = document.getElementById('atomCanvas');
+  if (!ac) return;
+  var actx = ac.getContext('2d');
+  var TAU = Math.PI * 2;
+
+  // colour palette matches voice agents
+  var BG_R = 42, BG_G = 40, BG_B = 56;
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  // baked-in configuration from the tweak session
+  var SIZE = 0.395, CX_FRAC = 0.865, CY_FRAC = 0.795;
+  var RINGS = [
+    { dots: 35, size: 1.25, spin: -0.64, phase: 1.53, tilt: 3.14, roll: 0.57, wob: 0.00 },
+    { dots: 44, size: 1.60, spin: -0.55, phase: 1.20, tilt: 0.95, roll: 1.35, wob: 0.18 },
+    { dots: 40, size: 1.50, spin:  0.34, phase: 2.40, tilt: 0.23, roll: 0.57, wob: 0.10 }
+  ];
+
+  var aw = 0, ah = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function aResize() {
+    var r = ac.getBoundingClientRect();
+    aw = r.width; ah = r.height;
+    ac.width = Math.round(aw * dpr); ac.height = Math.round(ah * dpr);
+    actx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  aResize();
+  new ResizeObserver(aResize).observe(ac);
+
+  function norm(v){var l=Math.hypot(v[0],v[1],v[2])||1;return[v[0]/l,v[1]/l,v[2]/l];}
+  function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+
+  function atomFrame(now) {
+    requestAnimationFrame(atomFrame);
+    if (!aw || !ah) return;
+    var t = now / 1000;
+
+    actx.clearRect(0, 0, aw, ah);
+
+    var R = Math.min(aw, ah) * SIZE;
+    var cx = aw * CX_FRAC;
+    var cy = ah * CY_FRAC;
+
+    for (var ri = 0; ri < RINGS.length; ri++) {
+      var ring = RINGS[ri];
+
+      // ring plane basis from tilt + roll (+ live wobble)
+      var wob = Math.sin(t * 0.6 + ring.phase) * ring.wob;
+      var n = norm([Math.sin(ring.roll + wob),
+                    Math.cos(ring.tilt) * Math.cos(ring.roll),
+                    Math.sin(ring.tilt) * Math.cos(ring.roll)]);
+      var tmp = Math.abs(n[1]) > 0.9 ? [1,0,0] : [0,1,0];
+      var u = norm(cross(n, tmp));
+      var v = norm(cross(n, u));
+
+      var ang = t * ring.spin + ring.phase;
+      var N = ring.dots;
+
+      for (var i = 0; i < N; i++) {
+        var theta = (i / N) * TAU + ang;
+        var ct = Math.cos(theta), st = Math.sin(theta);
+        var x = u[0]*ct + v[0]*st;
+        var y = u[1]*ct + v[1]*st;
+        var z = u[2]*ct + v[2]*st;
+
+        var d = (z + 1) * 0.5;                  // 0 far .. 1 near
+        var persp = 0.86 + 0.24 * d;
+        var px = cx + x * R * persp;
+        var py = cy - y * R * persp;
+
+        var sizeMul = 0.35 + 0.65 * d;
+        var mix = 0.35 + 0.65 * d;
+        var cr = Math.round(BG_R + (DOT_R - BG_R) * mix);
+        var cg = Math.round(BG_G + (DOT_G - BG_G) * mix);
+        var cb = Math.round(BG_B + (DOT_B - BG_B) * mix);
+
+        var alpha = 0.35 + 0.55 * d;
+        var rad = ring.size * sizeMul;
+        if (rad < 0.35) continue;
+
+        actx.globalAlpha = alpha;
+        actx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+        actx.beginPath();
+        actx.arc(px, py, rad, 0, TAU);
+        actx.fill();
+      }
+    }
+    actx.globalAlpha = 1;
+  }
+  requestAnimationFrame(atomFrame);
+})();
+
+// ── Concentric dashed orbit rings inside the Self-Serve Analytics box ──
+// Two orbit layers. Outer layer spins clockwise, inner layer counter-clockwise.
+// Each ring is a dashed circle whose size follows a bell curve tied to its
+// angular position, so the layer breathes as it rotates.
+// Ported from the reference p5 sketch.
+(function initOrbits() {
+  var oc = document.getElementById('orbitsCanvas');
+  if (!oc) return;
+  var octx = oc.getContext('2d');
+  var TAU = Math.PI * 2, PI = Math.PI, HALF_PI = Math.PI / 2;
+
+  // palette matches the rest of the card (near-white on transparent bg)
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  // Config — mirrors the p5 sketch's `settings`, but sizes are expressed as
+  // fractions of R so it scales with the card automatically.
+  var CFG = {
+    outerRings:   15,
+    innerRings:   7,
+    outerOrbit:   1.085,
+    innerOrbit:   0.525,
+    outerSpeed:   0.6,
+    innerSpeed:   0.52,
+    outerMin:     0.007,
+    innerMin:     0.012,
+    outerMax:     0.115,
+    innerMax:     0.072,
+    outerWeight:  0.85,
+    innerWeight:  0.7,
+    flipDirections: false,
+    dashLenFrac:  0.34,
+    gapLenFrac:   0.20,
+    minAlpha:     0.53,
+    maxAlpha:     1.00,
+    sizeFrac:     0.35,
+    cxFrac:       0.795,
+    cyOffset:     0.575
+  };
+
+
+  var ow = 0, oh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function oResize() {
+    var r = oc.getBoundingClientRect();
+    ow = r.width; oh = r.height;
+    oc.width = Math.round(ow * dpr); oc.height = Math.round(oh * dpr);
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  oResize();
+  new ResizeObserver(oResize).observe(oc);
+
+  function smoothstep(v) { return v * v * (3 - 2 * v); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  var last = 0, elapsed = 0;
+
+  function drawDashedRing(cx, cy, radius, alphaFrac, weight) {
+    if (radius <= 0.5) return;
+    octx.beginPath();
+    // dash rhythm proportional to ring size, per the reference sketch
+    var circumference = TAU * radius;
+    var dashLength = Math.max(1.6, radius * CFG.dashLenFrac);
+    var gapLength  = Math.max(1.0, radius * CFG.gapLenFrac);
+    var pattern = dashLength + gapLength;
+    var dashCount = Math.max(5, Math.floor(circumference / pattern));
+    var dashAng = TAU * (dashLength / circumference);
+    var gapAng  = TAU * (gapLength / circumference);
+
+    octx.strokeStyle = 'rgba(' + DOT_R + ',' + DOT_G + ',' + DOT_B + ',' + alphaFrac.toFixed(3) + ')';
+    octx.lineWidth = weight;
+    octx.lineCap = 'round';
+
+    for (var i = 0; i < dashCount; i++) {
+      var start = i * (dashAng + gapAng);
+      var end = start + dashAng;
+      octx.beginPath();
+      octx.arc(cx, cy, radius, start, end);
+      octx.stroke();
+    }
+  }
+
+  function drawLayer(cx, cy, R, cfg) {
+    var spacing = TAU / cfg.count;
+    for (var i = 0; i < cfg.count; i++) {
+      var angle = -HALF_PI + cfg.direction * elapsed * cfg.speed + i * spacing + cfg.phase;
+      var phase = ((angle % TAU) + TAU) % TAU;
+      var normalized = phase / TAU;
+      var growth = smoothstep(Math.sin(normalized * PI));
+      var radius = lerp(cfg.minSize, cfg.maxSize, growth) * R;
+      var alpha = lerp(CFG.minAlpha, CFG.maxAlpha, growth);
+      var x = cx + Math.cos(angle) * cfg.orbit * R;
+      var y = cy + Math.sin(angle) * cfg.orbit * R;
+      drawDashedRing(x, y, radius, alpha, cfg.weight);
+    }
+  }
+
+  function orbitsFrame(now) {
+    requestAnimationFrame(orbitsFrame);
+    if (!ow || !oh) return;
+    if (last === 0) last = now;
+    var delta = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    elapsed += delta;
+
+    octx.clearRect(0, 0, ow, oh);
+
+    // placement matches the other cards' footprint
+    var R = Math.min(ow, oh) * CFG.sizeFrac;
+    var cx = ow * CFG.cxFrac;
+    var cy = oh - R * CFG.cyOffset;
+
+    var flip = CFG.flipDirections ? -1 : 1;
+    // outer layer
+    drawLayer(cx, cy, R, {
+      count: CFG.outerRings, orbit: CFG.outerOrbit, speed: CFG.outerSpeed,
+      direction: 1 * flip, minSize: CFG.outerMin, maxSize: CFG.outerMax,
+      weight: CFG.outerWeight, phase: 0
+    });
+
+    // inner layer (opposite direction to outer)
+    drawLayer(cx, cy, R, {
+      count: CFG.innerRings, orbit: CFG.innerOrbit, speed: CFG.innerSpeed,
+      direction: -1 * flip, minSize: CFG.innerMin, maxSize: CFG.innerMax,
+      weight: CFG.innerWeight, phase: PI / 13
+    });
+  }
+  requestAnimationFrame(orbitsFrame);
+})();
+
+// ── Grid wave inside the Document Intelligence box ──
+// Fixed 10x10 grid of squares. A soft Gaussian bump travels across the grid;
+// each square's size = base + gaussian(distance to wave center) * boost.
+// Wave center follows a periodic Lissajous-like path so the loop is seamless.
+(function initGrid() {
+  var gc = document.getElementById('gridCanvas');
+  if (!gc) return;
+  var gctx = gc.getContext('2d');
+
+  // colour palette matches the other animations (near-white on transparent card bg)
+  var BG_R = 42, BG_G = 40, BG_B = 56;
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  var CONFIG = {
+    rows: 10,
+    cols: 10,
+    baseSize: 0.14,      // fraction of cell (small squares at rest)
+    maxSize: 0.85,       // fraction of cell (peak size at wave center)
+    waveRadius: 1.8,     // gaussian sigma, measured in cells
+    duration: 7000       // ms per full loop
+  };
+
+  var gw = 0, gh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function gResize() {
+    var r = gc.getBoundingClientRect();
+    gw = r.width; gh = r.height;
+    gc.width = Math.round(gw * dpr); gc.height = Math.round(gh * dpr);
+    gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  gResize();
+  new ResizeObserver(gResize).observe(gc);
+
+  var TAU = Math.PI * 2;
+
+  function gridFrame(now) {
+    requestAnimationFrame(gridFrame);
+    if (!gw || !gh) return;
+
+    gctx.clearRect(0, 0, gw, gh);
+
+    // sizing + placement matching voice agents footprint
+    var R = Math.min(gw, gh) * 0.35;
+    var cx = gw * 0.78;
+    var cy = gh - R * 0.95 * 0.45;
+    var side = R * 2;
+    var cellW = side / CONFIG.cols;
+    var cellH = side / CONFIG.rows;
+    var originX = cx - R;
+    var originY = cy - R;
+
+    // Periodic parametric path for the wave center — no manual reset needed.
+    // Two coprime harmonics keep the trajectory organic (not perfectly linear)
+    // and guarantee a seamless loop after `duration`.
+    var t = (now % CONFIG.duration) / CONFIG.duration;   // 0..1
+    var ang = t * TAU;
+    // Lissajous with 1:1 ratios but out-of-phase; centred at (mid, mid) in cell coords
+    var midC = (CONFIG.cols - 1) / 2;
+    var midR = (CONFIG.rows - 1) / 2;
+    var waveC = midC + Math.sin(ang) * (CONFIG.cols * 0.42);
+    var waveR = midR + Math.sin(ang * 2 + Math.PI * 0.5) * (CONFIG.rows * 0.28);
+
+    var sigma2 = 2 * CONFIG.waveRadius * CONFIG.waveRadius;
+
+    for (var rr = 0; rr < CONFIG.rows; rr++) {
+      for (var cc = 0; cc < CONFIG.cols; cc++) {
+        // grid position (in cell units) — permanently fixed
+        var dc = cc - waveC;
+        var dr = rr - waveR;
+        var dist2 = dc * dc + dr * dr;
+
+        // Gaussian falloff: 1 at wave center, smoothly to 0 at distance
+        var influence = Math.exp(-dist2 / sigma2);
+
+        // size interpolates between base and max
+        var sizeFrac = CONFIG.baseSize + (CONFIG.maxSize - CONFIG.baseSize) * influence;
+        var s = cellW * sizeFrac;
+
+        // colour + alpha follow influence so the wave has some tonal weight too
+        var mix = 0.45 + 0.55 * influence;
+        var cr = Math.round(BG_R + (DOT_R - BG_R) * mix);
+        var cg = Math.round(BG_G + (DOT_G - BG_G) * mix);
+        var cb = Math.round(BG_B + (DOT_B - BG_B) * mix);
+        var alpha = 0.55 + 0.45 * influence;
+
+        var px = originX + (cc + 0.5) * cellW;
+        var py = originY + (rr + 0.5) * cellH;
+
+        gctx.globalAlpha = alpha;
+        gctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+        gctx.fillRect(px - s / 2, py - s / 2, s, s);
+      }
+    }
+    gctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(gridFrame);
+})();
+
+// ── Radial halftone dot pattern inside the Knowledge Search box ──
+// Fixed radial layout of dots (small at the rim, larger toward centre).
+// A soft wave travels inward, briefly amplifying dot sizes as it passes over
+// each ring — positions never change, only radii.
+(function initKnowledge() {
+  var kc = document.getElementById('knowledgeCanvas');
+  if (!kc) return;
+  var kctx = kc.getContext('2d');
+  var TAU = Math.PI * 2;
+
+  // palette matches the rest of the card
+  var BG_R = 42, BG_G = 40, BG_B = 56;
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  // ── LIVE CONFIG — every value here is wired into the tweak panel ──
+  var CFG = {
+    // layout
+    rings:       10,
+    ringDensity: 32,
+    innerR:      0.06,
+    minSize:     0.009,
+    maxSize:     0.055,
+    falloffExp:  1.5,
+
+    // wave
+    LOOP_S:      4.8,
+    waveWidth:   0.14,
+    waveBoost:   0.55,
+    edgeFade:    0.06,
+    toneFloor:   0.24,
+
+    // placement
+    sizeFrac:    0.43,
+    cxFrac:      0.78,
+    cyOffset:    0.45
+  };
+
+  var dots = [];
+  function rebuild() {
+    dots = [];
+    // start at i=1 so there's no single dot at the centre — the innermost
+    // populated ring is the first proper ring outward from centre.
+    for (var i = 1; i < CFG.rings; i++) {
+      var f = i / (CFG.rings - 1);
+      var rNorm = CFG.innerR + (1 - CFG.innerR) * f;
+      var count = Math.max(6, Math.round(rNorm * CFG.ringDensity));
+      var baseSize = CFG.minSize + (CFG.maxSize - CFG.minSize) * Math.pow(1 - f, CFG.falloffExp);
+      var angOff = (i & 1) ? Math.PI / count : 0;
+      for (var j = 0; j < count; j++) {
+        var a = (j / count) * TAU + angOff;
+        dots.push({ x: Math.cos(a) * rNorm, y: Math.sin(a) * rNorm, rNorm: rNorm, base: baseSize });
+      }
+    }
+  }
+  rebuild();
+
+  var kw = 0, kh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function kResize() {
+    var r = kc.getBoundingClientRect();
+    kw = r.width; kh = r.height;
+    kc.width = Math.round(kw * dpr); kc.height = Math.round(kh * dpr);
+    kctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  kResize();
+  new ResizeObserver(kResize).observe(kc);
+
+  function pingPong(t) { return t < 0.5 ? (t * 2) : (2 - t * 2); }
+  function easeInOut(x) { return x * x * (3 - 2 * x); }
+
+  function knowledgeFrame(now) {
+    requestAnimationFrame(knowledgeFrame);
+    if (!kw || !kh) return;
+
+    kctx.clearRect(0, 0, kw, kh);
+
+    var R = Math.min(kw, kh) * CFG.sizeFrac;
+    var cx = kw * CFG.cxFrac;
+    var cy = kh - R * CFG.cyOffset;
+
+    // Continuous inward wave. Each wave travels rim -> centre in LOOP_S,
+    // then a new one starts. To avoid a visible cut when the last wave is
+    // near the centre, we run TWO overlapping wave positions and combine
+    // their influence — as one fades near the middle, the next has already
+    // started from the rim.
+    var raw = (now / 1000) / CFG.LOOP_S;
+    var phase1 = raw - Math.floor(raw);            // 0..1
+    var phase2 = (raw + 0.5) - Math.floor(raw + 0.5);
+    var travel1 = easeInOut(phase1);
+    var travel2 = easeInOut(phase2);
+    var waveR1 = 1 - travel1;                       // rim -> centre
+    var waveR2 = 1 - travel2;
+
+    var sigma2 = 2 * CFG.waveWidth * CFG.waveWidth;
+
+    for (var d = 0; d < dots.length; d++) {
+      var p = dots[d];
+      var dr1 = p.rNorm - waveR1;
+      var dr2 = p.rNorm - waveR2;
+      var infl1 = Math.exp(-(dr1 * dr1) / sigma2);
+      var infl2 = Math.exp(-(dr2 * dr2) / sigma2);
+      var influence = Math.max(infl1, infl2);
+      var size = p.base * (1 + CFG.waveBoost * influence);
+
+      var edgeFade = p.rNorm > (1 - CFG.edgeFade)
+        ? Math.max(0, 1 - (p.rNorm - (1 - CFG.edgeFade)) / CFG.edgeFade) : 1;
+
+      var tone = CFG.toneFloor + (1 - CFG.toneFloor) * (1 - p.rNorm);
+      var cr = Math.round(BG_R + (DOT_R - BG_R) * tone);
+      var cg = Math.round(BG_G + (DOT_G - BG_G) * tone);
+      var cb = Math.round(BG_B + (DOT_B - BG_B) * tone);
+
+      var px = cx + p.x * R;
+      var py = cy + p.y * R;
+      var rad = size * R;
+      if (rad < 0.25) continue;
+
+      kctx.globalAlpha = edgeFade;
+      kctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+      kctx.beginPath();
+      kctx.arc(px, py, rad, 0, TAU);
+      kctx.fill();
+    }
+    kctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(knowledgeFrame);
+})();
+
+// ── Room-corner perspective grid inside the Process Automation box ──
+// Three visible faces of a cube corner viewed from inside. Each face is filled
+// with a regular 2D grid whose lines converge on the central vanishing point,
+// drawn as dots (no strokes). The three faces are: top wedge (ceiling),
+// lower-left wedge (left wall), lower-right wedge (right wall).
+(function initProcess() {
+  var pc = document.getElementById('processCanvas');
+  if (!pc) return;
+  var pctx = pc.getContext('2d');
+  var TAU = Math.PI * 2;
+
+  // palette matches the rest of the card
+  var BG_R = 42, BG_G = 40, BG_B = 56;
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  var CFG = {
+    grid:            9,
+    perspectivePow:  1.25,
+    depthCurve:      1.95,
+    minSize:         0.3,
+    maxSize:         1.6,
+    LOOP_S:          35.5,
+    swayAmp:         0.085,
+    edgeFade:        0.1,
+    sizeFrac:        0.485,
+    cxFrac:          0.815,
+    cyOffset:        1,
+    edge0Ang:       -3.14,
+    edge1Ang:       -0.38,
+    edge2Ang:        1.57,
+    edge0Len:        1.51,
+    edge1Len:        0.98,
+    edge2Len:        1.3,
+    // pulse — travels outward from vanishing point along the depth axis
+    pulseSpeed:      0.18,
+    pulseWidth:      0.28,
+    pulseBoost:      1.55
+  };
+
+  var pw = 0, ph = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function pResize() {
+    var r = pc.getBoundingClientRect();
+    pw = r.width; ph = r.height;
+    pc.width = Math.round(pw * dpr); pc.height = Math.round(ph * dpr);
+    pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  pResize();
+  new ResizeObserver(pResize).observe(pc);
+
+  function processFrame(now) {
+    requestAnimationFrame(processFrame);
+    if (!pw || !ph) return;
+
+    pctx.clearRect(0, 0, pw, ph);
+
+    // placement matches voice agents footprint
+    var R = Math.min(pw, ph) * CFG.sizeFrac;
+    var cx = pw * CFG.cxFrac;
+    var cy = ph - R * CFG.cyOffset;
+
+    // slow drift of the vanishing point so the frame breathes
+    var t = (now / 1000) / CFG.LOOP_S;
+    var vpX = cx + Math.sin(t * TAU) * CFG.swayAmp * R;
+    var vpY = cy + Math.cos(t * TAU * 0.7) * CFG.swayAmp * R;
+
+    // Three "edge" directions coming out of the vanishing point.
+    // Angles measured in screen space. Straight down, upper-left, upper-right.
+    // Three faces sit between consecutive edges:
+    //   FACE 0 (top wedge)    → between upperLeft and upperRight edges
+    //   FACE 1 (left wall)    → between upperLeft edge and downward edge
+    //   FACE 2 (right wall)   → between downward edge and upperRight edge
+    var edges = [
+      { ang: CFG.edge0Ang, len: R * CFG.edge0Len },  // upper-left
+      { ang: CFG.edge1Ang, len: R * CFG.edge1Len },  // upper-right
+      { ang: CFG.edge2Ang, len: R * CFG.edge2Len }   // downward
+    ];
+
+    // Face triangle definitions in terms of (edgeA, edgeB) whose outer endpoints
+    // become two of the triangle's vertices. Vanishing point is the third vertex.
+    var faces = [
+      [0, 1], // top wedge (between the two upper edges)
+      [0, 2], // left wall (between upper-left and downward)
+      [2, 1]  // right wall (between downward and upper-right)
+    ];
+
+    // depth-axis pulse — a moving position along `depth` in 0..1 that briefly
+    // boosts size and tone as it passes each dot's depth band.
+    var pt = (now / 1000) * CFG.pulseSpeed;
+    var pphase = pt - Math.floor(pt);
+    var wavePos = pphase < 0.5 ? pphase * 2 : 2 - pphase * 2;   // ping-pong
+    var psigma2 = 2 * CFG.pulseWidth * CFG.pulseWidth;
+
+    for (var f = 0; f < faces.length; f++) {
+      var eA = edges[faces[f][0]];
+      var eB = edges[faces[f][1]];
+
+      // Outer corners of this face (endpoints of the two bounding edges)
+      var ax = Math.cos(eA.ang) * eA.len;
+      var ay = Math.sin(eA.ang) * eA.len;
+      var bx = Math.cos(eB.ang) * eB.len;
+      var by = Math.sin(eB.ang) * eB.len;
+
+      // Fill the face with a grid. `u` runs along edge A (0 at VP → 1 at outer),
+      // `v` runs along edge B (0 at VP → 1 at outer). Both use nonlinear spacing
+      // so dots crowd near the vanishing point and spread toward the outer corners.
+      for (var i = 1; i <= CFG.grid; i++) {
+        for (var j = 1; j <= CFG.grid; j++) {
+          var tu = i / CFG.grid;
+          var tv = j / CFG.grid;
+          // perspective compression along each axis
+          var u = Math.pow(tu, CFG.perspectivePow);
+          var v = Math.pow(tv, CFG.perspectivePow);
+          // world-to-screen: linear blend from vp toward each outer corner
+          // (this is the flat perspective — no true 3D, just projection).
+          var x = vpX + ax * u + bx * v;
+          var y = vpY + ay * u + by * v;
+
+          // depth proxy: how far from the vanishing point along the face's
+          // dominant direction. Use max of u,v so corners still read as "near".
+          var depth = Math.max(u, v);
+          var dNear = Math.pow(depth, CFG.depthCurve);
+
+          // pulse influence at this depth band
+          var pd = depth - wavePos;
+          var pInfl = Math.exp(-(pd * pd) / psigma2);
+          var pulseMul = 1 + (CFG.pulseBoost - 1) * pInfl;
+
+          // dot size grows toward the foreground, boosted by pulse
+          var size = (CFG.minSize + (CFG.maxSize - CFG.minSize) * dNear) * pulseMul;
+
+          // colour + alpha: near the vanishing point the dots blend toward bg;
+          // pulse lifts the tone briefly toward full near-white
+          var baseMix = 0.35 + 0.65 * dNear;
+          var mix = baseMix + (1 - baseMix) * pInfl;
+          var cr = Math.round(BG_R + (DOT_R - BG_R) * mix);
+          var cg = Math.round(BG_G + (DOT_G - BG_G) * mix);
+          var cb = Math.round(BG_B + (DOT_B - BG_B) * mix);
+
+          // edge fade: dots at the outermost ring soften into the bg
+          var edgeF = depth > (1 - CFG.edgeFade)
+            ? Math.max(0, 1 - (depth - (1 - CFG.edgeFade)) / CFG.edgeFade) : 1;
+          var alpha = (0.4 + 0.6 * dNear) * edgeF;
+
+          if (size < 0.25 || alpha < 0.02) continue;
+          pctx.globalAlpha = alpha;
+          pctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+          pctx.beginPath();
+          pctx.arc(x, y, size, 0, TAU);
+          pctx.fill();
+        }
+      }
+    }
+    pctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(processFrame);
+})();
+
+// ── Halftone density lattice inside the Ops Copilots box ──
+// Rectangular lattice of small dots where the SPACING varies across both axes:
+// dense in the top-left, progressively sparser toward the bottom-right.
+// Dot size stays roughly uniform — density is what changes.
+(function initAmoeba() {
+  var ac = document.getElementById('amoebaCanvas');
+  if (!ac) return;
+  var actx = ac.getContext('2d');
+  var TAU = Math.PI * 2;
+
+  // palette matches the rest of the card
+  var BG_R = 42, BG_G = 40, BG_B = 56;
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  var CFG = {
+    aspect:       1.55,
+    xSteps:       31,
+    ySteps:       22,
+    xExponent:    2.55,
+    yExponent:    2.95,
+    dotSize:      0.5,
+    edgeFade:     0.28,
+    sizeFrac:     0.33,
+    cxFrac:       0.75,
+    cyOffset:     0.77,
+    // pulse — diagonal wave sweeping from tight top-left toward bottom-right
+    pulseSpeed:   0.12,     // cycles per second
+    pulseWidth:   0.34,     // gaussian sigma along the diagonal (0..1)
+    pulseBoost:   1.4,      // peak size multiplier
+    minTone:      0.30,     // rest tone blend toward BG (0 = bg, 1 = full near-white)
+    maxTone:      1.00
+  };
+
+  var aw = 0, ah = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function aResize() {
+    var r = ac.getBoundingClientRect();
+    aw = r.width; ah = r.height;
+    ac.width = Math.round(aw * dpr); ac.height = Math.round(ah * dpr);
+    actx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  aResize();
+  new ResizeObserver(aResize).observe(ac);
+
+  function amoebaFrame(now) {
+    requestAnimationFrame(amoebaFrame);
+    if (!aw || !ah) return;
+    actx.clearRect(0, 0, aw, ah);
+
+    var R = Math.min(aw, ah) * CFG.sizeFrac;
+    var W = R * 2 * CFG.aspect;
+    var H = R * 2;
+    var cx = aw * CFG.cxFrac;
+    var cy = ah - R * CFG.cyOffset;
+    var x0 = cx - W / 2;
+    var y0 = cy - H / 2;
+
+    // Diagonal pulse — always sweeps from top-left corner outward across the
+    // sparse dots to the bottom-right, then restarts from top-left. No reverse.
+    var t = (now / 1000) * CFG.pulseSpeed;
+    var phase = t - Math.floor(t);
+    var wavePos = phase;   // 0..1 diagonal position, monotonically increasing
+    var sigma2 = 2 * CFG.pulseWidth * CFG.pulseWidth;
+
+    for (var iy = 0; iy < CFG.ySteps; iy++) {
+      var ty = iy / (CFG.ySteps - 1);
+      var yFrac = Math.pow(ty, CFG.yExponent);
+      var py = y0 + yFrac * H;
+
+      for (var ix = 0; ix < CFG.xSteps; ix++) {
+        var tx = ix / (CFG.xSteps - 1);
+        var xFrac = Math.pow(tx, CFG.xExponent);
+        var px = x0 + xFrac * W;
+
+        // dot's diagonal coordinate (0 top-left..1 bottom-right)
+        var diag = (tx + ty) * 0.5;
+        var d = diag - wavePos;
+        var influence = Math.exp(-(d * d) / sigma2);
+
+        // size + tone both track the pulse
+        var boostFactor = 1 + (CFG.pulseBoost - 1) * influence;
+        var size = CFG.dotSize * boostFactor;
+        var toneMix = CFG.minTone + (CFG.maxTone - CFG.minTone) * influence;
+        var cr = Math.round(BG_R + (DOT_R - BG_R) * toneMix);
+        var cg = Math.round(BG_G + (DOT_G - BG_G) * toneMix);
+        var cb = Math.round(BG_B + (DOT_B - BG_B) * toneMix);
+
+        // rim fade — softens right/bottom edges into the card BG
+        var edge = 1;
+        if (tx > 1 - CFG.edgeFade) edge *= Math.max(0, 1 - (tx - (1 - CFG.edgeFade)) / CFG.edgeFade);
+        if (ty > 1 - CFG.edgeFade) edge *= Math.max(0, 1 - (ty - (1 - CFG.edgeFade)) / CFG.edgeFade);
+
+        actx.globalAlpha = edge;
+        actx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+        actx.beginPath();
+        actx.arc(px, py, size, 0, TAU);
+        actx.fill();
+      }
+    }
+    actx.globalAlpha = 1;
+  }
+  requestAnimationFrame(amoebaFrame);
+})();
+
+// ── Grid wave inside the Document Intelligence box ──
+// Fixed 10x10 grid of squares. A soft Gaussian bump travels across the grid;
+// each square's size = base + gaussian(distance to wave center) * boost.
+// Wave center follows a periodic Lissajous-like path so the loop is seamless.
+(function initGrid() {
+  var gc = document.getElementById('gridCanvas');
+  if (!gc) return;
+  var gctx = gc.getContext('2d');
+
+  // colour palette matches the other animations (near-white on transparent card bg)
+  var BG_R = 42, BG_G = 40, BG_B = 56;
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  var CONFIG = {
+    rows: 10,
+    cols: 10,
+    baseSize: 0.14,      // fraction of cell (small squares at rest)
+    maxSize: 0.85,       // fraction of cell (peak size at wave center)
+    waveRadius: 1.8,     // gaussian sigma, measured in cells
+    duration: 7000       // ms per full loop
+  };
+
+  var gw = 0, gh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function gResize() {
+    var r = gc.getBoundingClientRect();
+    gw = r.width; gh = r.height;
+    gc.width = Math.round(gw * dpr); gc.height = Math.round(gh * dpr);
+    gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  gResize();
+  new ResizeObserver(gResize).observe(gc);
+
+  var TAU = Math.PI * 2;
+
+  function gridFrame(now) {
+    requestAnimationFrame(gridFrame);
+    if (!gw || !gh) return;
+
+    gctx.clearRect(0, 0, gw, gh);
+
+    // sizing + placement matching voice agents footprint
+    var R = Math.min(gw, gh) * 0.35;
+    var cx = gw * 0.78;
+    var cy = gh - R * 0.95 * 0.45;
+    var side = R * 2;
+    var cellW = side / CONFIG.cols;
+    var cellH = side / CONFIG.rows;
+    var originX = cx - R;
+    var originY = cy - R;
+
+    // Periodic parametric path for the wave center — no manual reset needed.
+    // Two coprime harmonics keep the trajectory organic (not perfectly linear)
+    // and guarantee a seamless loop after `duration`.
+    var t = (now % CONFIG.duration) / CONFIG.duration;   // 0..1
+    var ang = t * TAU;
+    // Lissajous with 1:1 ratios but out-of-phase; centred at (mid, mid) in cell coords
+    var midC = (CONFIG.cols - 1) / 2;
+    var midR = (CONFIG.rows - 1) / 2;
+    var waveC = midC + Math.sin(ang) * (CONFIG.cols * 0.42);
+    var waveR = midR + Math.sin(ang * 2 + Math.PI * 0.5) * (CONFIG.rows * 0.28);
+
+    var sigma2 = 2 * CONFIG.waveRadius * CONFIG.waveRadius;
+
+    for (var rr = 0; rr < CONFIG.rows; rr++) {
+      for (var cc = 0; cc < CONFIG.cols; cc++) {
+        // grid position (in cell units) — permanently fixed
+        var dc = cc - waveC;
+        var dr = rr - waveR;
+        var dist2 = dc * dc + dr * dr;
+
+        // Gaussian falloff: 1 at wave center, smoothly to 0 at distance
+        var influence = Math.exp(-dist2 / sigma2);
+
+        // size interpolates between base and max
+        var sizeFrac = CONFIG.baseSize + (CONFIG.maxSize - CONFIG.baseSize) * influence;
+        var s = cellW * sizeFrac;
+
+        // colour + alpha follow influence so the wave has some tonal weight too
+        var mix = 0.45 + 0.55 * influence;
+        var cr = Math.round(BG_R + (DOT_R - BG_R) * mix);
+        var cg = Math.round(BG_G + (DOT_G - BG_G) * mix);
+        var cb = Math.round(BG_B + (DOT_B - BG_B) * mix);
+        var alpha = 0.55 + 0.45 * influence;
+
+        var px = originX + (cc + 0.5) * cellW;
+        var py = originY + (rr + 0.5) * cellH;
+
+        gctx.globalAlpha = alpha;
+        gctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+        gctx.fillRect(px - s / 2, py - s / 2, s, s);
+      }
+    }
+    gctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(gridFrame);
+})();
+
+// ── Radial halftone dot pattern inside the Knowledge Search box ──
+// Fixed radial layout of dots (small at the rim, larger toward centre).
+// A soft wave travels inward, briefly amplifying dot sizes as it passes over
+// each ring — positions never change, only radii.
+(function initKnowledge() {
+  var kc = document.getElementById('knowledgeCanvas');
+  if (!kc) return;
+  var kctx = kc.getContext('2d');
+  var TAU = Math.PI * 2;
+
+  // palette matches the rest of the card
+  var BG_R = 42, BG_G = 40, BG_B = 56;
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  // ── LIVE CONFIG — every value here is wired into the tweak panel ──
+  var CFG = {
+    // layout
+    rings:       10,
+    ringDensity: 32,
+    innerR:      0.06,
+    minSize:     0.009,
+    maxSize:     0.055,
+    falloffExp:  1.5,
+
+    // wave
+    LOOP_S:      4.8,
+    waveWidth:   0.14,
+    waveBoost:   0.55,
+    edgeFade:    0.06,
+    toneFloor:   0.24,
+
+    // placement
+    sizeFrac:    0.43,
+    cxFrac:      0.78,
+    cyOffset:    0.45
+  };
+
+  var dots = [];
+  function rebuild() {
+    dots = [];
+    // start at i=1 so there's no single dot at the centre — the innermost
+    // populated ring is the first proper ring outward from centre.
+    for (var i = 1; i < CFG.rings; i++) {
+      var f = i / (CFG.rings - 1);
+      var rNorm = CFG.innerR + (1 - CFG.innerR) * f;
+      var count = Math.max(6, Math.round(rNorm * CFG.ringDensity));
+      var baseSize = CFG.minSize + (CFG.maxSize - CFG.minSize) * Math.pow(1 - f, CFG.falloffExp);
+      var angOff = (i & 1) ? Math.PI / count : 0;
+      for (var j = 0; j < count; j++) {
+        var a = (j / count) * TAU + angOff;
+        dots.push({ x: Math.cos(a) * rNorm, y: Math.sin(a) * rNorm, rNorm: rNorm, base: baseSize });
+      }
+    }
+  }
+  rebuild();
+
+  var kw = 0, kh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function kResize() {
+    var r = kc.getBoundingClientRect();
+    kw = r.width; kh = r.height;
+    kc.width = Math.round(kw * dpr); kc.height = Math.round(kh * dpr);
+    kctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  kResize();
+  new ResizeObserver(kResize).observe(kc);
+
+  function pingPong(t) { return t < 0.5 ? (t * 2) : (2 - t * 2); }
+  function easeInOut(x) { return x * x * (3 - 2 * x); }
+
+  function knowledgeFrame(now) {
+    requestAnimationFrame(knowledgeFrame);
+    if (!kw || !kh) return;
+
+    kctx.clearRect(0, 0, kw, kh);
+
+    var R = Math.min(kw, kh) * CFG.sizeFrac;
+    var cx = kw * CFG.cxFrac;
+    var cy = kh - R * CFG.cyOffset;
+
+    // Continuous inward wave. Each wave travels rim -> centre in LOOP_S,
+    // then a new one starts. To avoid a visible cut when the last wave is
+    // near the centre, we run TWO overlapping wave positions and combine
+    // their influence — as one fades near the middle, the next has already
+    // started from the rim.
+    var raw = (now / 1000) / CFG.LOOP_S;
+    var phase1 = raw - Math.floor(raw);            // 0..1
+    var phase2 = (raw + 0.5) - Math.floor(raw + 0.5);
+    var travel1 = easeInOut(phase1);
+    var travel2 = easeInOut(phase2);
+    var waveR1 = 1 - travel1;                       // rim -> centre
+    var waveR2 = 1 - travel2;
+
+    var sigma2 = 2 * CFG.waveWidth * CFG.waveWidth;
+
+    for (var d = 0; d < dots.length; d++) {
+      var p = dots[d];
+      var dr1 = p.rNorm - waveR1;
+      var dr2 = p.rNorm - waveR2;
+      var infl1 = Math.exp(-(dr1 * dr1) / sigma2);
+      var infl2 = Math.exp(-(dr2 * dr2) / sigma2);
+      var influence = Math.max(infl1, infl2);
+      var size = p.base * (1 + CFG.waveBoost * influence);
+
+      var edgeFade = p.rNorm > (1 - CFG.edgeFade)
+        ? Math.max(0, 1 - (p.rNorm - (1 - CFG.edgeFade)) / CFG.edgeFade) : 1;
+
+      var tone = CFG.toneFloor + (1 - CFG.toneFloor) * (1 - p.rNorm);
+      var cr = Math.round(BG_R + (DOT_R - BG_R) * tone);
+      var cg = Math.round(BG_G + (DOT_G - BG_G) * tone);
+      var cb = Math.round(BG_B + (DOT_B - BG_B) * tone);
+
+      var px = cx + p.x * R;
+      var py = cy + p.y * R;
+      var rad = size * R;
+      if (rad < 0.25) continue;
+
+      kctx.globalAlpha = edgeFade;
+      kctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+      kctx.beginPath();
+      kctx.arc(px, py, rad, 0, TAU);
+      kctx.fill();
+    }
+    kctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(knowledgeFrame);
+})();
+
+
 </script>
 </body>
 </html>
