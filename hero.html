@@ -476,16 +476,22 @@ requestAnimationFrame(tick);
     innerMax:     0.072,
     outerWeight:  0.85,
     innerWeight:  0.7,
+    // third (outermost) ring — bigger, opposite direction from outer
+    thirdRings:   18,
+    thirdOrbit:   1.75,
+    thirdSpeed:   0.49,
+    thirdMin:     0.002,
+    thirdMax:     0.115,
+    thirdWeight:  1.0,
     flipDirections: false,
     dashLenFrac:  0.34,
     gapLenFrac:   0.20,
     minAlpha:     0.53,
     maxAlpha:     1.00,
     sizeFrac:     0.35,
-    cxFrac:       0.795,
-    cyOffset:     0.575
+    cxFrac:       0.815,
+    cyOffset:     0.495
   };
-
 
   var ow = 0, oh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
   function oResize() {
@@ -570,6 +576,13 @@ requestAnimationFrame(tick);
       count: CFG.innerRings, orbit: CFG.innerOrbit, speed: CFG.innerSpeed,
       direction: -1 * flip, minSize: CFG.innerMin, maxSize: CFG.innerMax,
       weight: CFG.innerWeight, phase: PI / 13
+    });
+
+    // third (outermost) layer — opposite direction to the outer layer
+    drawLayer(cx, cy, R, {
+      count: CFG.thirdRings, orbit: CFG.thirdOrbit, speed: CFG.thirdSpeed,
+      direction: -1 * flip, minSize: CFG.thirdMin, maxSize: CFG.thirdMax,
+      weight: CFG.thirdWeight, phase: PI / 7
     });
   }
   requestAnimationFrame(orbitsFrame);
@@ -672,132 +685,6 @@ requestAnimationFrame(tick);
   requestAnimationFrame(gridFrame);
 })();
 
-// ── Radial halftone dot pattern inside the Knowledge Search box ──
-// Fixed radial layout of dots (small at the rim, larger toward centre).
-// A soft wave travels inward, briefly amplifying dot sizes as it passes over
-// each ring — positions never change, only radii.
-(function initKnowledge() {
-  var kc = document.getElementById('knowledgeCanvas');
-  if (!kc) return;
-  var kctx = kc.getContext('2d');
-  var TAU = Math.PI * 2;
-
-  // palette matches the rest of the card
-  var BG_R = 42, BG_G = 40, BG_B = 56;
-  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
-  // ── LIVE CONFIG — every value here is wired into the tweak panel ──
-  var CFG = {
-    // layout
-    rings:       10,
-    ringDensity: 32,
-    innerR:      0.06,
-    minSize:     0.009,
-    maxSize:     0.055,
-    falloffExp:  1.5,
-
-    // wave
-    LOOP_S:      4.8,
-    waveWidth:   0.14,
-    waveBoost:   0.55,
-    edgeFade:    0.06,
-    toneFloor:   0.24,
-
-    // placement
-    sizeFrac:    0.43,
-    cxFrac:      0.78,
-    cyOffset:    0.45
-  };
-
-  var dots = [];
-  function rebuild() {
-    dots = [];
-    // start at i=1 so there's no single dot at the centre — the innermost
-    // populated ring is the first proper ring outward from centre.
-    for (var i = 1; i < CFG.rings; i++) {
-      var f = i / (CFG.rings - 1);
-      var rNorm = CFG.innerR + (1 - CFG.innerR) * f;
-      var count = Math.max(6, Math.round(rNorm * CFG.ringDensity));
-      var baseSize = CFG.minSize + (CFG.maxSize - CFG.minSize) * Math.pow(1 - f, CFG.falloffExp);
-      var angOff = (i & 1) ? Math.PI / count : 0;
-      for (var j = 0; j < count; j++) {
-        var a = (j / count) * TAU + angOff;
-        dots.push({ x: Math.cos(a) * rNorm, y: Math.sin(a) * rNorm, rNorm: rNorm, base: baseSize });
-      }
-    }
-  }
-  rebuild();
-
-  var kw = 0, kh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  function kResize() {
-    var r = kc.getBoundingClientRect();
-    kw = r.width; kh = r.height;
-    kc.width = Math.round(kw * dpr); kc.height = Math.round(kh * dpr);
-    kctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  kResize();
-  new ResizeObserver(kResize).observe(kc);
-
-  function pingPong(t) { return t < 0.5 ? (t * 2) : (2 - t * 2); }
-  function easeInOut(x) { return x * x * (3 - 2 * x); }
-
-  function knowledgeFrame(now) {
-    requestAnimationFrame(knowledgeFrame);
-    if (!kw || !kh) return;
-
-    kctx.clearRect(0, 0, kw, kh);
-
-    var R = Math.min(kw, kh) * CFG.sizeFrac;
-    var cx = kw * CFG.cxFrac;
-    var cy = kh - R * CFG.cyOffset;
-
-    // Continuous inward wave. Each wave travels rim -> centre in LOOP_S,
-    // then a new one starts. To avoid a visible cut when the last wave is
-    // near the centre, we run TWO overlapping wave positions and combine
-    // their influence — as one fades near the middle, the next has already
-    // started from the rim.
-    var raw = (now / 1000) / CFG.LOOP_S;
-    var phase1 = raw - Math.floor(raw);            // 0..1
-    var phase2 = (raw + 0.5) - Math.floor(raw + 0.5);
-    var travel1 = easeInOut(phase1);
-    var travel2 = easeInOut(phase2);
-    var waveR1 = 1 - travel1;                       // rim -> centre
-    var waveR2 = 1 - travel2;
-
-    var sigma2 = 2 * CFG.waveWidth * CFG.waveWidth;
-
-    for (var d = 0; d < dots.length; d++) {
-      var p = dots[d];
-      var dr1 = p.rNorm - waveR1;
-      var dr2 = p.rNorm - waveR2;
-      var infl1 = Math.exp(-(dr1 * dr1) / sigma2);
-      var infl2 = Math.exp(-(dr2 * dr2) / sigma2);
-      var influence = Math.max(infl1, infl2);
-      var size = p.base * (1 + CFG.waveBoost * influence);
-
-      var edgeFade = p.rNorm > (1 - CFG.edgeFade)
-        ? Math.max(0, 1 - (p.rNorm - (1 - CFG.edgeFade)) / CFG.edgeFade) : 1;
-
-      var tone = CFG.toneFloor + (1 - CFG.toneFloor) * (1 - p.rNorm);
-      var cr = Math.round(BG_R + (DOT_R - BG_R) * tone);
-      var cg = Math.round(BG_G + (DOT_G - BG_G) * tone);
-      var cb = Math.round(BG_B + (DOT_B - BG_B) * tone);
-
-      var px = cx + p.x * R;
-      var py = cy + p.y * R;
-      var rad = size * R;
-      if (rad < 0.25) continue;
-
-      kctx.globalAlpha = edgeFade;
-      kctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
-      kctx.beginPath();
-      kctx.arc(px, py, rad, 0, TAU);
-      kctx.fill();
-    }
-    kctx.globalAlpha = 1;
-  }
-  requestAnimationFrame(knowledgeFrame);
-})();
 
 // ── Room-corner perspective grid inside the Process Automation box ──
 // Three visible faces of a cube corner viewed from inside. Each face is filled
@@ -956,107 +843,299 @@ requestAnimationFrame(tick);
   requestAnimationFrame(processFrame);
 })();
 
-// ── Halftone density lattice inside the Ops Copilots box ──
-// Rectangular lattice of small dots where the SPACING varies across both axes:
-// dense in the top-left, progressively sparser toward the bottom-right.
-// Dot size stays roughly uniform — density is what changes.
+// ── Thinking Orb (crescent-lit) inside the Ops Copilots box ──
+// Inner sphere lattice + outer particle halo. Both are lit by a moving
+// "crescent" light band whose direction differs between inner and outer.
+// Ported from the reference Thinking_Orb (v2) sketch. Palette matches the
+// rest of the card set: near-white on transparent card BG.
 (function initAmoeba() {
-  var ac = document.getElementById('amoebaCanvas');
-  if (!ac) return;
-  var actx = ac.getContext('2d');
+  var host = document.getElementById('amoebaCanvas');
+  if (!host) return;
+  var ctx = host.getContext('2d');
   var TAU = Math.PI * 2;
 
-  // palette matches the rest of the card
-  var BG_R = 42, BG_G = 40, BG_B = 56;
-  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
+  // ── LIVE CONFIG ──
   var CFG = {
-    aspect:       1.55,
-    xSteps:       31,
-    ySteps:       22,
-    xExponent:    2.55,
-    yExponent:    2.95,
-    dotSize:      0.5,
-    edgeFade:     0.28,
-    sizeFrac:     0.33,
-    cxFrac:       0.75,
-    cyOffset:     0.77,
-    // pulse — diagonal wave sweeping from tight top-left toward bottom-right
-    pulseSpeed:   0.12,     // cycles per second
-    pulseWidth:   0.34,     // gaussian sigma along the diagonal (0..1)
-    pulseBoost:   1.4,      // peak size multiplier
-    minTone:      0.30,     // rest tone blend toward BG (0 = bg, 1 = full near-white)
-    maxTone:      1.00
+    // inner sphere lattice
+    rows:             32,
+    density:          0.4,
+    dotSize:          1.0,
+    sparse:           0.72,
+    speed:            0.22,
+    tilt:            -0.94,
+
+    // crescent lighting
+    crescentSpeed:    0.5,
+    crescentWidth:    1.15,
+    crescentFloor:    0.26,
+    crescentIntensity: 0.65,
+    crescentDrift:    0.0,
+
+    // outer halo
+    outerRadius:      1.28,
+    outerCount:       2050,
+    outerBackOpacity: 0.0,
+    outerEdge:        0.62,
+    outerSpeedBoost:  2.45,
+
+    // placement
+    sizeFrac:         0.405,
+    cxFrac:           0.775,
+    cyOffset:         0.76
   };
 
-  var aw = 0, ah = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  function aResize() {
-    var r = ac.getBoundingClientRect();
-    aw = r.width; ah = r.height;
-    ac.width = Math.round(aw * dpr); ac.height = Math.round(ah * dpr);
-    actx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  aResize();
-  new ResizeObserver(aResize).observe(ac);
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
 
-  function amoebaFrame(now) {
-    requestAnimationFrame(amoebaFrame);
-    if (!aw || !ah) return;
-    actx.clearRect(0, 0, aw, ah);
+  function smoothstep(u){var v=Math.max(0,Math.min(1,u));return v*v*(3-2*v);}
 
-    var R = Math.min(aw, ah) * CFG.sizeFrac;
-    var W = R * 2 * CFG.aspect;
-    var H = R * 2;
-    var cx = aw * CFG.cxFrac;
-    var cy = ah - R * CFG.cyOffset;
-    var x0 = cx - W / 2;
-    var y0 = cy - H / 2;
-
-    // Diagonal pulse — always sweeps from top-left corner outward across the
-    // sparse dots to the bottom-right, then restarts from top-left. No reverse.
-    var t = (now / 1000) * CFG.pulseSpeed;
-    var phase = t - Math.floor(t);
-    var wavePos = phase;   // 0..1 diagonal position, monotonically increasing
-    var sigma2 = 2 * CFG.pulseWidth * CFG.pulseWidth;
-
-    for (var iy = 0; iy < CFG.ySteps; iy++) {
-      var ty = iy / (CFG.ySteps - 1);
-      var yFrac = Math.pow(ty, CFG.yExponent);
-      var py = y0 + yFrac * H;
-
-      for (var ix = 0; ix < CFG.xSteps; ix++) {
-        var tx = ix / (CFG.xSteps - 1);
-        var xFrac = Math.pow(tx, CFG.xExponent);
-        var px = x0 + xFrac * W;
-
-        // dot's diagonal coordinate (0 top-left..1 bottom-right)
-        var diag = (tx + ty) * 0.5;
-        var d = diag - wavePos;
-        var influence = Math.exp(-(d * d) / sigma2);
-
-        // size + tone both track the pulse
-        var boostFactor = 1 + (CFG.pulseBoost - 1) * influence;
-        var size = CFG.dotSize * boostFactor;
-        var toneMix = CFG.minTone + (CFG.maxTone - CFG.minTone) * influence;
-        var cr = Math.round(BG_R + (DOT_R - BG_R) * toneMix);
-        var cg = Math.round(BG_G + (DOT_G - BG_G) * toneMix);
-        var cb = Math.round(BG_B + (DOT_B - BG_B) * toneMix);
-
-        // rim fade — softens right/bottom edges into the card BG
-        var edge = 1;
-        if (tx > 1 - CFG.edgeFade) edge *= Math.max(0, 1 - (tx - (1 - CFG.edgeFade)) / CFG.edgeFade);
-        if (ty > 1 - CFG.edgeFade) edge *= Math.max(0, 1 - (ty - (1 - CFG.edgeFade)) / CFG.edgeFade);
-
-        actx.globalAlpha = edge;
-        actx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
-        actx.beginPath();
-        actx.arc(px, py, size, 0, TAU);
-        actx.fill();
+  function buildPoints(rows, density){
+    var pts=[];
+    for(var i=0;i<rows;i++){
+      var theta=Math.PI*(i+0.5)/rows;
+      var count=Math.max(3,Math.round(Math.sin(theta)*rows*2.15*density));
+      var st=Math.sin(theta),ct=Math.cos(theta);
+      for(var j=0;j<count;j++){
+        var phi=(j/count)*TAU+(i%2)*(Math.PI/count);
+        pts.push({b:[st*Math.cos(phi),ct,st*Math.sin(phi)],
+                  jitter:0.55+Math.random()*0.45,
+                  keep:Math.random(),twk:Math.random()*TAU});
       }
     }
-    actx.globalAlpha = 1;
+    return pts;
   }
-  requestAnimationFrame(amoebaFrame);
+
+  function buildOuter(n){
+    var arr=[];
+    for(var i=0;i<n;i++){
+      var z=Math.random()*2-1, a=Math.random()*TAU, s=Math.sqrt(1-z*z);
+      arr.push({b:[s*Math.cos(a),z,s*Math.sin(a)],
+                jitter:0.5+Math.random()*0.5,
+                twk:Math.random()*TAU});
+    }
+    return arr;
+  }
+
+  var pts, outer;
+  function rebuild(){
+    pts = buildPoints(CFG.rows, CFG.density);
+    outer = buildOuter(CFG.outerCount);
+  }
+  rebuild();
+
+  var hw=0, hh=0, dpr=Math.min(window.devicePixelRatio||1,2);
+  function hResize(){
+    var r=host.getBoundingClientRect();
+    hw=r.width; hh=r.height;
+    host.width=Math.round(hw*dpr); host.height=Math.round(hh*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  hResize();
+  new ResizeObserver(hResize).observe(host);
+
+  var t0=performance.now();
+  function orbFrame(now){
+    requestAnimationFrame(orbFrame);
+    if(!hw||!hh)return;
+    var t=(now-t0)/1000;
+
+    var R = Math.min(hw,hh)*CFG.sizeFrac;
+    var cx = hw*CFG.cxFrac;
+    var cy = hh - R*CFG.cyOffset;
+    var r = R;
+
+    ctx.clearRect(0,0,hw,hh);
+
+    var yaw = t*CFG.speed;
+    var sinT=Math.sin(CFG.tilt), cosT=Math.cos(CFG.tilt);
+    var cyw=Math.cos(yaw), syw=Math.sin(yaw);
+
+    // crescent light basis
+    var cEl = Math.sin(t*CFG.crescentSpeed*0.31)*CFG.crescentDrift;
+    var cosE=Math.cos(cEl), sinE=Math.sin(cEl);
+    var sAz = t*(CFG.speed+CFG.crescentSpeed);
+    var sL1 = [Math.sin(sAz)*cosE, sinE, Math.cos(sAz)*cosE];
+    var sW2 = sAz + CFG.crescentWidth;
+    var sL2 = [Math.sin(sW2)*cosE, sinE, Math.cos(sW2)*cosE];
+
+    // outer crescent basis (opposite spin)
+    var cAz = -t*(CFG.speed+CFG.crescentSpeed)*CFG.outerSpeedBoost;
+    var cL1 = [Math.sin(cAz)*cosE, sinE, Math.cos(cAz)*cosE];
+    var w2 = cAz + CFG.crescentWidth;
+    var cL2 = [Math.sin(w2)*cosE, sinE, Math.cos(w2)*cosE];
+
+    // ── inner sphere ──
+    for(var i=0;i<pts.length;i++){
+      var q=pts[i], b=q.b;
+      var x1=b[0]*cyw+b[2]*syw;
+      var z1=-b[0]*syw+b[2]*cyw;
+      var x=x1*r;
+      var vy=b[1]*cosT - z1*sinT;
+      var vz=b[1]*sinT + z1*cosT;
+      var y2=vy*r, z2=vz*r;
+
+      var a1=x1*sL1[0]+vy*sL1[1]+vz*sL1[2];
+      var a2=x1*sL2[0]+vy*sL2[1]+vz*sL2[2];
+      var lit=smoothstep(a1/0.62);
+      var bite=smoothstep(-a2/0.55);
+      var cgl=lit*bite;
+      var aMul = CFG.crescentFloor + cgl*CFG.crescentIntensity;
+      var sMul = 1 + cgl*0.85;
+
+      var d = (z2+r)/(2*r);
+      var cullFade = 1;
+      if(d<0.5){
+        var thr=0.25+d*2*CFG.sparse;
+        cullFade=(thr-q.keep)/0.16+0.5;
+        if(cullFade<=0)continue;
+        if(cullFade>1)cullFade=1;
+        cullFade=cullFade*cullFade*(3-2*cullFade);
+      }
+
+      var persp=0.82+0.28*d;
+      var px=cx+x*persp, py=cy+y2*persp;
+      var twinkle=0.9+0.1*Math.sin(t*1.4+q.twk);
+      var alpha=Math.min(255,(14+230*Math.pow(d,1.9))*q.jitter*twinkle*cullFade*aMul);
+      if(alpha<2)continue;
+      var s=CFG.dotSize*(0.72+0.62*d)*sMul;
+      ctx.fillStyle='rgba('+DOT_R+','+DOT_G+','+DOT_B+','+(alpha/255).toFixed(3)+')';
+      ctx.fillRect(px-s/2, py-s/2, s, s);
+    }
+
+    // ── outer halo ──
+    var oR = r*CFG.outerRadius;
+    var oYaw = cAz;
+    var ocy=Math.cos(oYaw), osy=Math.sin(oYaw);
+    for(var i2=0;i2<outer.length;i2++){
+      var q2=outer[i2], b2=q2.b;
+      var x1o=b2[0]*ocy+b2[2]*osy;
+      var z1o=-b2[0]*osy+b2[2]*ocy;
+      var vyo=b2[1]*cosT - z1o*sinT;
+      var vzo=b2[1]*sinT + z1o*cosT;
+
+      var a1o=x1o*cL1[0]+vyo*cL1[1]+vzo*cL1[2];
+      var a2o=x1o*cL2[0]+vyo*cL2[1]+vzo*cL2[2];
+      var lito=smoothstep(a1o/CFG.outerEdge);
+      var biteo=smoothstep(-a2o/(CFG.outerEdge*0.89));
+      var cglo=lito*biteo;
+      if(cglo<0.02)continue;
+
+      var doo=(vzo+1)/2;
+      var backFade = doo<0.5 ? (CFG.outerBackOpacity+(1-CFG.outerBackOpacity)*(doo/0.5)) : 1;
+      var pxo=cx+x1o*oR*(0.82+0.28*doo);
+      var pyo=cy+vyo*oR*(0.82+0.28*doo);
+      var twinkleo=0.85+0.15*Math.sin(t*1.8+q2.twk);
+      var alphao=Math.min(255, cglo*255*q2.jitter*twinkleo*backFade);
+      var so=CFG.dotSize*(0.9+0.55*doo);
+      ctx.fillStyle='rgba('+DOT_R+','+DOT_G+','+DOT_B+','+(alphao/255).toFixed(3)+')';
+      ctx.fillRect(pxo-so/2, pyo-so/2, so, so);
+    }
+  }
+  requestAnimationFrame(orbFrame);
+})();
+
+// ── Plain rotating dot sphere inside the Knowledge Search box ──
+// Same lattice + rotation as the Ops Copilots orb, but no crescent light,
+// no outer halo, no layer snaps — just the sphere spinning with a mild depth
+// fade so far-side dots dim naturally.
+(function initSphereOnly() {
+  var host = document.getElementById('knowledgeCanvas');
+  if (!host) return;
+  var ctx = host.getContext('2d');
+  var TAU = Math.PI * 2;
+
+  // matches Ops Copilots' inner-sphere config
+  var CFG = {
+    rows:      32,
+    density:   0.4,
+    dotSize:   1.0,
+    sparse:    0.72,
+    speed:     0.22,
+    tilt:     -0.94,
+    sizeFrac:  0.35,
+    cxFrac:    0.78,
+    cyOffset:  0.4275
+  };
+
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+
+  function buildPoints(rows, density) {
+    var pts = [];
+    for (var i = 0; i < rows; i++) {
+      var theta = Math.PI * (i + 0.5) / rows;
+      var count = Math.max(3, Math.round(Math.sin(theta) * rows * 2.15 * density));
+      var st = Math.sin(theta), ct = Math.cos(theta);
+      for (var j = 0; j < count; j++) {
+        var phi = (j / count) * TAU + (i % 2) * (Math.PI / count);
+        pts.push({
+          b: [st * Math.cos(phi), ct, st * Math.sin(phi)],
+          jitter: 0.55 + Math.random() * 0.45,
+          keep: Math.random(),
+          twk: Math.random() * TAU
+        });
+      }
+    }
+    return pts;
+  }
+  var pts = buildPoints(CFG.rows, CFG.density);
+
+  var hw = 0, hh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function hResize() {
+    var r = host.getBoundingClientRect();
+    hw = r.width; hh = r.height;
+    host.width = Math.round(hw * dpr); host.height = Math.round(hh * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  hResize();
+  new ResizeObserver(hResize).observe(host);
+
+  var t0 = performance.now();
+  function sphereFrame(now) {
+    requestAnimationFrame(sphereFrame);
+    if (!hw || !hh) return;
+    var t = (now - t0) / 1000;
+
+    var R = Math.min(hw, hh) * CFG.sizeFrac;
+    var cx = hw * CFG.cxFrac;
+    var cy = hh - R * CFG.cyOffset;
+    var r = R;
+
+    ctx.clearRect(0, 0, hw, hh);
+
+    var yaw = t * CFG.speed;
+    var sinT = Math.sin(CFG.tilt), cosT = Math.cos(CFG.tilt);
+    var cyw = Math.cos(yaw), syw = Math.sin(yaw);
+
+    for (var i = 0; i < pts.length; i++) {
+      var q = pts[i], b = q.b;
+      var x1 = b[0] * cyw + b[2] * syw;
+      var z1 = -b[0] * syw + b[2] * cyw;
+      var vy = b[1] * cosT - z1 * sinT;
+      var vz = b[1] * sinT + z1 * cosT;
+      var x = x1 * r, y2 = vy * r, z2 = vz * r;
+      var d = (z2 + r) / (2 * r);        // 0 = back, 1 = front
+
+      // cull back-side dots the same way the Ops orb does
+      var cullFade = 1;
+      if (d < 0.5) {
+        var thr = 0.25 + d * 2 * CFG.sparse;
+        cullFade = (thr - q.keep) / 0.16 + 0.5;
+        if (cullFade <= 0) continue;
+        if (cullFade > 1) cullFade = 1;
+        cullFade = cullFade * cullFade * (3 - 2 * cullFade);
+      }
+
+      var persp = 0.82 + 0.28 * d;
+      var px = cx + x * persp, py = cy + y2 * persp;
+      var twinkle = 0.9 + 0.1 * Math.sin(t * 1.4 + q.twk);
+      // uniform brightness with mild depth fade — no crescent
+      var alpha = Math.min(255, (60 + 195 * Math.pow(d, 1.2)) * q.jitter * twinkle * cullFade);
+      if (alpha < 2) continue;
+      var s = CFG.dotSize * (0.72 + 0.62 * d);
+      ctx.fillStyle = 'rgba(' + DOT_R + ',' + DOT_G + ',' + DOT_B + ',' + (alpha / 255).toFixed(3) + ')';
+      ctx.fillRect(px - s / 2, py - s / 2, s, s);
+    }
+  }
+  requestAnimationFrame(sphereFrame);
 })();
 
 // ── Grid wave inside the Document Intelligence box ──
@@ -1156,132 +1235,6 @@ requestAnimationFrame(tick);
   requestAnimationFrame(gridFrame);
 })();
 
-// ── Radial halftone dot pattern inside the Knowledge Search box ──
-// Fixed radial layout of dots (small at the rim, larger toward centre).
-// A soft wave travels inward, briefly amplifying dot sizes as it passes over
-// each ring — positions never change, only radii.
-(function initKnowledge() {
-  var kc = document.getElementById('knowledgeCanvas');
-  if (!kc) return;
-  var kctx = kc.getContext('2d');
-  var TAU = Math.PI * 2;
-
-  // palette matches the rest of the card
-  var BG_R = 42, BG_G = 40, BG_B = 56;
-  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
-  // ── LIVE CONFIG — every value here is wired into the tweak panel ──
-  var CFG = {
-    // layout
-    rings:       10,
-    ringDensity: 32,
-    innerR:      0.06,
-    minSize:     0.009,
-    maxSize:     0.055,
-    falloffExp:  1.5,
-
-    // wave
-    LOOP_S:      4.8,
-    waveWidth:   0.14,
-    waveBoost:   0.55,
-    edgeFade:    0.06,
-    toneFloor:   0.24,
-
-    // placement
-    sizeFrac:    0.43,
-    cxFrac:      0.78,
-    cyOffset:    0.45
-  };
-
-  var dots = [];
-  function rebuild() {
-    dots = [];
-    // start at i=1 so there's no single dot at the centre — the innermost
-    // populated ring is the first proper ring outward from centre.
-    for (var i = 1; i < CFG.rings; i++) {
-      var f = i / (CFG.rings - 1);
-      var rNorm = CFG.innerR + (1 - CFG.innerR) * f;
-      var count = Math.max(6, Math.round(rNorm * CFG.ringDensity));
-      var baseSize = CFG.minSize + (CFG.maxSize - CFG.minSize) * Math.pow(1 - f, CFG.falloffExp);
-      var angOff = (i & 1) ? Math.PI / count : 0;
-      for (var j = 0; j < count; j++) {
-        var a = (j / count) * TAU + angOff;
-        dots.push({ x: Math.cos(a) * rNorm, y: Math.sin(a) * rNorm, rNorm: rNorm, base: baseSize });
-      }
-    }
-  }
-  rebuild();
-
-  var kw = 0, kh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  function kResize() {
-    var r = kc.getBoundingClientRect();
-    kw = r.width; kh = r.height;
-    kc.width = Math.round(kw * dpr); kc.height = Math.round(kh * dpr);
-    kctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  kResize();
-  new ResizeObserver(kResize).observe(kc);
-
-  function pingPong(t) { return t < 0.5 ? (t * 2) : (2 - t * 2); }
-  function easeInOut(x) { return x * x * (3 - 2 * x); }
-
-  function knowledgeFrame(now) {
-    requestAnimationFrame(knowledgeFrame);
-    if (!kw || !kh) return;
-
-    kctx.clearRect(0, 0, kw, kh);
-
-    var R = Math.min(kw, kh) * CFG.sizeFrac;
-    var cx = kw * CFG.cxFrac;
-    var cy = kh - R * CFG.cyOffset;
-
-    // Continuous inward wave. Each wave travels rim -> centre in LOOP_S,
-    // then a new one starts. To avoid a visible cut when the last wave is
-    // near the centre, we run TWO overlapping wave positions and combine
-    // their influence — as one fades near the middle, the next has already
-    // started from the rim.
-    var raw = (now / 1000) / CFG.LOOP_S;
-    var phase1 = raw - Math.floor(raw);            // 0..1
-    var phase2 = (raw + 0.5) - Math.floor(raw + 0.5);
-    var travel1 = easeInOut(phase1);
-    var travel2 = easeInOut(phase2);
-    var waveR1 = 1 - travel1;                       // rim -> centre
-    var waveR2 = 1 - travel2;
-
-    var sigma2 = 2 * CFG.waveWidth * CFG.waveWidth;
-
-    for (var d = 0; d < dots.length; d++) {
-      var p = dots[d];
-      var dr1 = p.rNorm - waveR1;
-      var dr2 = p.rNorm - waveR2;
-      var infl1 = Math.exp(-(dr1 * dr1) / sigma2);
-      var infl2 = Math.exp(-(dr2 * dr2) / sigma2);
-      var influence = Math.max(infl1, infl2);
-      var size = p.base * (1 + CFG.waveBoost * influence);
-
-      var edgeFade = p.rNorm > (1 - CFG.edgeFade)
-        ? Math.max(0, 1 - (p.rNorm - (1 - CFG.edgeFade)) / CFG.edgeFade) : 1;
-
-      var tone = CFG.toneFloor + (1 - CFG.toneFloor) * (1 - p.rNorm);
-      var cr = Math.round(BG_R + (DOT_R - BG_R) * tone);
-      var cg = Math.round(BG_G + (DOT_G - BG_G) * tone);
-      var cb = Math.round(BG_B + (DOT_B - BG_B) * tone);
-
-      var px = cx + p.x * R;
-      var py = cy + p.y * R;
-      var rad = size * R;
-      if (rad < 0.25) continue;
-
-      kctx.globalAlpha = edgeFade;
-      kctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
-      kctx.beginPath();
-      kctx.arc(px, py, rad, 0, TAU);
-      kctx.fill();
-    }
-    kctx.globalAlpha = 1;
-  }
-  requestAnimationFrame(knowledgeFrame);
-})();
 
 
 </script>
