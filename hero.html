@@ -11,8 +11,9 @@
   body { font-family: 'Switzer','Helvetica Neue',Helvetica,Arial,sans-serif; background: #0D0C1D; overflow: hidden; }
   #host { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
   #root { position: absolute; left: 0; top: 0; transform-origin: 0 0; color: #f2f2f2; }
-  [data-node] > div:first-child { transition: transform .25s ease, box-shadow .25s ease; }
-  [data-node]:hover > div:first-child { transform: scale(1.08); box-shadow: 0 24px 50px -12px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.06); }
+  @media (max-width:767px) { [data-node] .card, [data-node] canvas { border-radius:10px !important; } }
+  [data-node] .card { transition: transform .25s ease, box-shadow .25s ease; }
+  [data-node]:hover .card { transform: scale(1.08); box-shadow: 0 24px 50px -12px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.06); }
 </style>
 </head>
 <body>
@@ -23,33 +24,31 @@
 </div>
 
 <script>
+// Sizes: Scale's tile spec. base = desktop design units, mbase = mobile CSS px (<768px); mfx/mfy = mobile position fractions.
+// Rendered CSS px = base * min(viewportWidth/1550, 1.5); converted to stage units in applyScale.
+// Breathing: ±5% sine on an inner wrapper, per-tile phase ~π apart (bph).
 const NODES = [
-  { id:'energy',    label:'SUPPORT AGENTS',        w:150, h:150, lcx:297,  lcy:702, pcx:144, pcy:1300, ax:10, ay:16, sp:6.0, ph:0.0 },
-  { id:'infra',     label:'VOICE AGENTS',w:175, h:165, lcx:660,  lcy:304, pcx:672, pcy:1360, ax:14, ay:8,  sp:7.2, ph:1.1 },
-  { id:'insurance', label:'DOCUMENT INTELLIGENCE',     w:175, h:165, lcx:255,  lcy:230, pcx:400, pcy:1520, ax:16, ay:10, sp:7.5, ph:2.3 },
-  { id:'health',    label:'KNOWLEDGE SEARCH',        w:150, h:140, lcx:1305, lcy:180, pcx:390, pcy:490,  ax:9,  ay:14, sp:6.6, ph:0.7 },
-  { id:'consumer',  label:'PROCESS AUTOMATION',      w:150, h:150, lcx:1635, lcy:325, pcx:685, pcy:400,  ax:15, ay:9,  sp:8.0, ph:3.1 },
-  { id:'life',      label:'OPS COPILOTS',  w:160, h:150, lcx:1010, lcy:825, pcx:120, pcy:210,  ax:11, ay:13, sp:7.0, ph:1.8 },
-  { id:'retail',    label:'SELF-SERVE ANALYTICS',        w:150, h:150, lcx:1725, lcy:735, pcx:590, pcy:195,  ax:12, ay:12, sp:8.5, ph:0.4 },
+  { id:'energy',    label:'SUPPORT<br>AGENTS',        base:144, mbase:80,  lcx:393,  lcy:760, mfx:0.89, mfy:0.72, ax:22, ay:24, sp:6.0, ph:0.0, bph:0.0 },
+  { id:'infra',     label:'VOICE AGENTS',          base:110, mbase:90,  lcx:547,  lcy:200, mfx:0.15, mfy:0.76, ax:26, ay:18, sp:7.2, ph:1.1, bph:3.3 },
+  { id:'insurance', label:'DOCUMENT INTELLIGENCE', base:168, mbase:96,  lcx:190,  lcy:330, mfx:0.55, mfy:0.86, ax:28, ay:22, sp:7.5, ph:2.3, bph:0.4 },
+  { id:'health',    label:'KNOWLEDGE SEARCH',      base:116, mbase:100, lcx:1420, lcy:235, mfx:0.13, mfy:0.21, ax:22, ay:20, sp:6.6, ph:0.7, bph:3.0 },
+  { id:'consumer',  label:'PROCESS AUTOMATION',    base:132, mbase:63,  lcx:1727, lcy:380, mfx:0.68, mfy:0.16, ax:28, ay:20, sp:8.0, ph:3.1, bph:0.2 },
+  { id:'life',      label:'OPS COPILOTS',          base:116, mbase:90,  lcx:1190, lcy:845, mfx:0.96, mfy:0.3, ax:26, ay:20, sp:7.0, ph:1.8, bph:3.5 },
+  { id:'retail',    label:'SELF-SERVE ANALYTICS',  base:170, mbase:80,  lcx:1713, lcy:800, mfx:0.44, mfy:0.29, ax:26, ay:24, sp:8.5, ph:0.4, bph:0.6 },
 ];
+NODES.forEach(n => { n.w = n.h = Math.round(n.base * 1900 / 1550); n.bamp = n.base <= 116 ? 0.025 : 0.05; });
 const LINKS = [
-  ['energy','infra'], ['infra','insurance'], ['energy','insurance'],
+  ['infra','insurance'], ['energy','insurance'],
   ['health','consumer'], ['consumer','retail'], ['life','retail'], ['health','life'], ['infra','health'],
   ['energy','life'],
 ];
+// Per-link pulse timing: travel duration, rest gap, start offset (seconds). Direction alternates every trip.
+const PULSE = LINKS.map((_, i) => ({ travel: 4.3 + (i % 4) * 0.5, gap: 1.8 + (i % 3) * 0.7, offset: i * 1.37 }));
+const PULSE_MIN = 8;    // dash length at the ends
+const PULSE_GROW = 0.2; // dash grows to this fraction of the line length at the middle
 const MODNAME = {
   energy:'Grid Load Forecasting', infra:'Predictive Maintenance', insurance:'Claims Automation',
   health:'Clinical Diagnostics', consumer:'Demand Forecasting', life:'Drug Discovery', retail:'Inventory Optimization',
-};
-const svgIcon = (inner) => `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
-const ICONS = {
-  energy:    svgIcon('<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2" y="13.5" width="4.5" height="6.5" rx="2"/><rect x="17.5" y="13.5" width="4.5" height="6.5" rx="2"/><path d="M19.5 20a3 3 0 0 1-3 3H13"/>'),
-  infra:     svgIcon('<rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>'),
-  insurance: svgIcon('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><line x1="8.5" y1="13" x2="15.5" y2="13"/><line x1="8.5" y1="16.5" x2="15.5" y2="16.5"/>'),
-  health:    svgIcon('<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/>'),
-  consumer:  svgIcon('<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><polyline points="21 3 21 8 16 8"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><polyline points="3 21 3 16 8 16"/>'),
-  life:      svgIcon('<rect x="4" y="8" width="16" height="12" rx="3"/><line x1="12" y1="4" x2="12" y2="8"/><circle cx="12" cy="3.5" r="1.2"/><circle cx="9.5" cy="13" r="1"/><circle cx="14.5" cy="13" r="1"/><line x1="9.5" y1="16.5" x2="14.5" y2="16.5"/>'),
-  retail:    svgIcon('<line x1="3" y1="20" x2="21" y2="20"/><rect x="5" y="10" width="3.5" height="10"/><rect x="10.5" y="6" width="3.5" height="14"/><rect x="16" y="13" width="3.5" height="7"/>'),
 };
 const BRANCH_OFF = [{x:-140,y:-80},{x:10,y:-125},{x:155,y:-70},{x:-170,y:25}];
 const SVGNS = 'http://www.w3.org/2000/svg';
@@ -61,28 +60,23 @@ const svg  = document.getElementById('wires');
 const byId = {};
 NODES.forEach(n => byId[n.id] = n);
 
+const CANVAS_ID = { infra:'sphereCanvas', energy:'atomCanvas', insurance:'gridCanvas', health:'knowledgeCanvas', consumer:'processCanvas', life:'amoebaCanvas', retail:'orbitsCanvas' };
+
 // node boxes
 const boxEls = {};
 NODES.forEach(n => {
   const el = document.createElement('div');
   el.setAttribute('data-node', n.id);
   el.style.cssText = `position:absolute;left:0;top:0;width:${n.w}px;height:${n.h}px;will-change:transform;`;
-  // Voice Agents gets a canvas for the particle sphere, Support Agents gets the atom orbits,
-  // Document Intelligence gets the roving-cluster grid, Knowledge Search gets the 3D dotted globe
-  let extraHTML = '';
-  if (n.id === 'infra') extraHTML = '<canvas id="sphereCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
-  if (n.id === 'energy') extraHTML = '<canvas id="atomCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
-  if (n.id === 'insurance') extraHTML = '<canvas id="gridCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
-  if (n.id === 'health') extraHTML = '<canvas id="knowledgeCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
-  if (n.id === 'consumer') extraHTML = '<canvas id="processCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
-  if (n.id === 'life') extraHTML = '<canvas id="amoebaCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
-  if (n.id === 'retail') extraHTML = '<canvas id="orbitsCanvas" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>';
-  el.innerHTML = `<div style="position:relative;width:100%;height:100%;border-radius:20px;background:#2a2838;overflow:hidden;">
-    <div style="position:absolute;top:14px;left:14px;right:14px;font-size:11px;line-height:1.3;letter-spacing:1px;color:#f2f2f2;z-index:2;">${n.label}</div>
+  const extraHTML = `<canvas id="${CANVAS_ID[n.id]}" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>`;
+  el.innerHTML = `<div class="breath" style="width:100%;height:100%;will-change:transform;"><div class="card" style="position:relative;width:100%;height:100%;border-radius:20px;background:#2a2838;overflow:hidden;">
+    <div class="lbl" style="position:absolute;top:14px;left:14px;right:14px;font-size:15px;line-height:1.3;letter-spacing:1px;color:#f2f2f2;z-index:2;">${n.label}</div>
     ${extraHTML}
-  </div>`;
+  </div></div>`;
   root.appendChild(el);
   boxEls[n.id] = el;
+  n.breathEl = el.firstElementChild;
+  n.lblEl = el.querySelector('.lbl');
   n.dragOff = {x:0,y:0}; n.residual = {x:0,y:0}; n.dragging = false;
 });
 
@@ -113,43 +107,49 @@ const SHOW_HOVER = false;
 
 let hovered = null, dragActive = false, scale = 1, curPortrait = null;
 
-function applyLayout(portrait) {
-  stageW = portrait ? 800 : 1900;
-  stageH = portrait ? 1720 : 960;
-  root.style.width = stageW + 'px';
-  root.style.height = stageH + 'px';
-  svg.setAttribute('width', stageW);
-  svg.setAttribute('height', stageH);
-  NODES.forEach(n => {
-    n.cx = portrait ? n.pcx : n.lcx;
-    n.cy = portrait ? n.pcy : n.lcy;
-    const el = boxEls[n.id];
-    el.style.left = (n.cx - n.w/2) + 'px';
-    el.style.top  = (n.cy - n.h/2) + 'px';
-  });
-}
-
 const PORTRAIT_MAX_WIDTH = 768;
 
+// Stage = the host viewport (same placement logic as hero-responsive): tile x/y are fractions of
+// width/height, tile size scales with width. Portrait uses the mobile arrangement (mfx/mfy, mbase).
 function applyScale() {
   const cw = host.clientWidth, ch = host.clientHeight;
-  const isMobileLandscape = window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
-  if (isMobileLandscape) { root.style.display = 'none'; return; }
-  root.style.display = '';
   const portrait = window.innerWidth < PORTRAIT_MAX_WIDTH;
-  if (portrait !== curPortrait) { curPortrait = portrait; applyLayout(portrait); }
-  scale = Math.min(cw / stageW, ch / stageH);
-  const ox = (cw - stageW * scale) / 2;
-  const oy = (ch - stageH * scale) / 2;
-  root.style.transform = `translate(${ox}px,${oy}px) scale(${scale})`;
+  curPortrait = portrait;
+  stageW = cw; stageH = ch; scale = 1;
+  root.style.transform = 'none';
+  if (portrait) {
+    const fm = Math.min(1, ch / 700, cw / 390);
+    NODES.forEach(n => { n.w = n.h = Math.round(n.mbase * fm); n.cx = Math.max(n.w * 0.3, Math.min(cw - n.w * 0.3, n.mfx * cw)); n.cy = n.mfy * ch; n.driftK = 0.55 * fm; });
+  } else {
+    const f = Math.min(1.5, 0.30 + cw / 1735, ch / 600);
+    NODES.forEach(n => {
+      n.driftK = 1;
+      n.w = n.h = Math.round(n.base * f);
+      n.cx = Math.max(n.w / 2 + 16, Math.min(cw - n.w / 2 - 16, n.lcx / 1900 * cw));
+      n.cy = n.lcy / 960 * ch;
+    });
+  }
+  root.style.width = stageW + 'px'; root.style.height = stageH + 'px';
+  svg.setAttribute('width', stageW); svg.setAttribute('height', stageH);
+  NODES.forEach(n => {
+    const el = boxEls[n.id];
+    el.style.width = n.w + 'px'; el.style.height = n.h + 'px';
+    el.style.left = (n.cx - n.w/2) + 'px';
+    el.style.top  = (n.cy - n.h/2) + 'px';
+    const k = Math.min(1, n.w / Math.round(n.base * 1900 / 1550));
+    const tiny = n.w < 70;
+    const fs = Math.max(tiny ? 7 : 9, 15 * k), pad = Math.max(tiny ? 6 : 8, 14 * k);
+    n.lblEl.style.fontSize = fs.toFixed(1) + 'px';
+    n.lblEl.style.letterSpacing = (tiny ? 0 : k).toFixed(2) + 'px';
+    n.lblEl.style.top = n.lblEl.style.left = n.lblEl.style.right = pad.toFixed(1) + 'px';
+  });
 }
 applyScale();
 new ResizeObserver(applyScale).observe(host);
 window.addEventListener('resize', applyScale);
 window.addEventListener('orientationchange', applyScale);
 
-// ── drag (fixed: uses setPointerCapture so the iframe keeps receiving
-//    events even when the cursor crosses over a Webflow overlay div) ──
+// ── drag (setPointerCapture keeps events flowing even over Webflow overlays) ──
 NODES.forEach(n => {
   const el = boxEls[n.id];
   el.style.cursor = 'grab'; el.style.touchAction = 'none';
@@ -173,7 +173,6 @@ NODES.forEach(n => {
     dragActive = false;
     n.residual = { x: n.dragOff.x, y: n.dragOff.y };
     el.style.cursor = 'grab';
-    // release capture safely
     if (pointerId != null) {
       try { el.releasePointerCapture(pointerId); } catch(_) {}
       pointerId = null;
@@ -182,11 +181,7 @@ NODES.forEach(n => {
     el.removeEventListener('pointerup', onUp);
   };
 
-  // safety: if capture is lost unexpectedly (e.g. browser kills it),
-  // treat it exactly like pointerup so the square snaps back
-  el.addEventListener('lostpointercapture', () => {
-    if (n.dragging) onUp();
-  });
+  el.addEventListener('lostpointercapture', () => { if (n.dragging) onUp(); });
 
   el.addEventListener('pointerdown', (e) => {
     n.dragging = true;
@@ -196,23 +191,14 @@ NODES.forEach(n => {
     startOff = { x: n.residual.x, y: n.residual.y };
     n.dragOff = { x: n.residual.x, y: n.residual.y };
     el.style.cursor = 'grabbing';
-
-    // ── KEY FIX: capture the pointer so all future move/up events
-    //    route to this element, even if the cursor leaves the iframe
-    //    and enters a Webflow overlay div on top ──
     pointerId = e.pointerId;
     el.setPointerCapture(e.pointerId);
-
-    // listen on the element (not window) — capture routes events here
     el.addEventListener('pointermove', onMove);
     el.addEventListener('pointerup', onUp);
-
     e.preventDefault();
   });
 });
 
-// extra safety: if the pointer leaves the document entirely (e.g. user
-// alt-tabs or moves outside the browser), release any stuck drag
 document.addEventListener('pointerleave', () => {
   NODES.forEach(n => {
     if (n.dragging) {
@@ -230,25 +216,38 @@ function tick(t) {
   const time = t/1000;
   for (const n of NODES) {
     const w = 2*Math.PI/n.sp;
-    const sx = Math.cos(time*w + n.ph)*n.ax;
-    const sy = Math.sin(time*w + n.ph)*n.ay;
+    const sx = Math.cos(time*w + n.ph)*n.ax*(n.driftK || 1);
+    const sy = Math.sin(time*w + n.ph)*n.ay*(n.driftK || 1);
     let dx, dy;
     if (n.dragging) { dx=n.dragOff.x; dy=n.dragOff.y; }
     else { n.residual.x*=0.9; n.residual.y*=0.9; dx=n.residual.x+sx; dy=n.residual.y+sy; }
     off[n.id] = {dx,dy};
     boxEls[n.id].style.transform = `translate(${dx}px,${dy}px)`;
+    n.breathEl.style.transform = `scale(${(1 - n.bamp) + n.bamp*Math.sin(time*w + n.bph)})`;
   }
   LINKS.forEach((l,i) => {
     const a=byId[l[0]], b=byId[l[1]];
+    const hide = curPortrait && l[0]==='health' && l[1]==='life';
+    lineEls[i].style.display = hide ? 'none' : '';
+    pulseEls[i].style.display = hide ? 'none' : '';
+    if (hide) return;
     const x1=a.cx+off[a.id].dx, y1=a.cy+off[a.id].dy;
     const x2=b.cx+off[b.id].dx, y2=b.cy+off[b.id].dy;
     const ln=lineEls[i];
     ln.setAttribute('x1',x1); ln.setAttribute('y1',y1); ln.setAttribute('x2',x2); ln.setAttribute('y2',y2);
     const pu=pulseEls[i];
-    pu.setAttribute('x1',x1); pu.setAttribute('y1',y1); pu.setAttribute('x2',x2); pu.setAttribute('y2',y2);
-    const len=Math.hypot(x2-x1,y2-y1), dash=25, travel=len+dash, phase=(time/5.5)%1;
-    pu.setAttribute('stroke-dasharray', dash+' '+len);
-    pu.setAttribute('stroke-dashoffset', dash-phase*travel);
+    const P=PULSE[i], cycle=P.travel+P.gap, tt=time+P.offset;
+    const trip=Math.floor(tt/cycle), local=tt-trip*cycle;
+    if (local >= P.travel) { pu.setAttribute('stroke-dasharray','0 1'); return; }
+    const raw=local/P.travel, p=raw*raw*(3-2*raw);
+    const fwd = trip % 2 === 0;
+    if (fwd) { pu.setAttribute('x1',x1); pu.setAttribute('y1',y1); pu.setAttribute('x2',x2); pu.setAttribute('y2',y2); }
+    else     { pu.setAttribute('x1',x2); pu.setAttribute('y1',y2); pu.setAttribute('x2',x1); pu.setAttribute('y2',y1); }
+    const len=Math.hypot(x2-x1,y2-y1);
+    const dash=PULSE_MIN + Math.max(0, len*PULSE_GROW - PULSE_MIN) * Math.sin(Math.PI*p);
+    const travel=len-dash; // head stops at the far end so the dash is never clipped
+    pu.setAttribute('stroke-dasharray', dash+' '+(len+dash));
+    pu.setAttribute('stroke-dashoffset', dash-p*travel);
   });
   branches.forEach((b,k) => {
     if (hovered) {
@@ -277,16 +276,13 @@ requestAnimationFrame(tick);
     MIN_SIZE: 0.2, MAX_SIZE: 5, FALLOFF: 1.8,
     LOBE: 2.5, RINGS: 1, PULSES: 2,
     DEPTH_OPACITY: 0.25, LOOP_DURATION: 6000,
-    PHASE: 0.40,   // rest frame
-    EDGE_FADE: 0.35 // outer 35% of radius fades to transparent
+    PHASE: 0.40,
+    EDGE_FADE: 0.35
   };
-
-  // bg color components for blending (card bg #2a2838)
   const BG_R = 42, BG_G = 40, BG_B = 56;
-  // dot highlight color — soft lavender-grey, not white
   const DOT_R = 200, DOT_G = 198, DOT_B = 210;
 
-  let sw = 0, sh = 0;
+  let sw = 0, sh = 0, ks = 1;
   function sResize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const r = sc.getBoundingClientRect();
@@ -294,6 +290,7 @@ requestAnimationFrame(tick);
     sc.width = Math.round(sw * dpr);
     sc.height = Math.round(sh * dpr);
     sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ks = Math.max(0.4, Math.min(1, Math.min(sw, sh) / 100));
   }
   sResize();
   new ResizeObserver(sResize).observe(sc);
@@ -302,7 +299,6 @@ requestAnimationFrame(tick);
     requestAnimationFrame(sphereFrame);
     const c = CFG;
     const st = (now % c.LOOP_DURATION) / c.LOOP_DURATION;
-
     const T = TAU * st * c.PULSES;
     const R = Math.min(sw, sh) * c.SPHERE;
     const S = (R * 2) / c.ACROSS;
@@ -327,22 +323,15 @@ requestAnimationFrame(tick);
         const wave = 0.5 - 0.5 * Math.cos(T - arc * TAU * c.RINGS);
         const lobe = Math.pow(wave, c.LOBE);
         const fall = Math.pow(1 - u * u, c.FALLOFF);
-        const s = c.MIN_SIZE + (c.MAX_SIZE - c.MIN_SIZE) * fall * lobe;
+        const s = (c.MIN_SIZE + (c.MAX_SIZE - c.MIN_SIZE) * fall * lobe) * ks;
         if (s <= 0.1) continue;
-
         const shade = fall * (0.4 + 0.6 * lobe);
-        // blend dot color toward BG based on shade
         const mix = Math.pow(shade, 0.5);
         const r = Math.round(BG_R + (DOT_R - BG_R) * mix);
         const g = Math.round(BG_G + (DOT_G - BG_G) * mix);
         const b = Math.round(BG_B + (DOT_B - BG_B) * mix);
-
-        // edge fade: particles near the rim dissolve to transparent
-        const edgeFade = u > (1 - c.EDGE_FADE)
-          ? 1 - (u - (1 - c.EDGE_FADE)) / c.EDGE_FADE
-          : 1;
+        const edgeFade = u > (1 - c.EDGE_FADE) ? 1 - (u - (1 - c.EDGE_FADE)) / c.EDGE_FADE : 1;
         const alpha = Math.min(1, ((1 - c.DEPTH_OPACITY) + c.DEPTH_OPACITY * mix + 0.3)) * edgeFade;
-
         sctx.globalAlpha = alpha;
         sctx.fillStyle = `rgb(${r},${g},${b})`;
         sctx.beginPath();
@@ -355,261 +344,105 @@ requestAnimationFrame(tick);
   requestAnimationFrame(sphereFrame);
 })();
 
-// ── Atom orbits inside the Support Agents box ──
-(function initAtom() {
-  var ac = document.getElementById('atomCanvas');
-  if (!ac) return;
-  var actx = ac.getContext('2d');
-  var TAU = Math.PI * 2;
-
-  // colour palette matches voice agents
+// ── Hand-off stream inside the Support Agents box ──
+(function initHandoff() {
+  var hc = document.getElementById('atomCanvas');
+  if (!hc) return;
+  var ctx = hc.getContext('2d');
+  var TAU = Math.PI * 2, LOOP = 6000;
   var BG_R = 42, BG_G = 40, BG_B = 56;
   var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
-  // baked-in configuration from the tweak session
-  var SIZE = 0.395, CX_FRAC = 0.865, CY_FRAC = 0.795;
-  var RINGS = [
-    { dots: 35, size: 1.25, spin: -0.64, phase: 1.53, tilt: 3.14, roll: 0.57, wob: 0.00 },
-    { dots: 44, size: 1.60, spin: -0.55, phase: 1.20, tilt: 0.95, roll: 1.35, wob: 0.18 },
-    { dots: 40, size: 1.50, spin:  0.34, phase: 2.40, tilt: 0.23, roll: 0.57, wob: 0.10 }
-  ];
-
-  var aw = 0, ah = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  function aResize() {
-    var r = ac.getBoundingClientRect();
-    aw = r.width; ah = r.height;
-    ac.width = Math.round(aw * dpr); ac.height = Math.round(ah * dpr);
-    actx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var seed = 61; function rnd(){ seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+  var REQ = []; for (var i = 0; i < 56; i++) REQ.push([rnd(), rnd(), rnd()]);
+  function ease(v){ v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); }
+  function col(mix){ return 'rgb(' + Math.round(BG_R + (DOT_R - BG_R) * mix) + ',' + Math.round(BG_G + (DOT_G - BG_G) * mix) + ',' + Math.round(BG_B + (DOT_B - BG_B) * mix) + ')'; }
+  function dot(x, y, r, mix, a){ ctx.globalAlpha = a; ctx.fillStyle = col(mix); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+  var hw = 0, hh = 0, ks = 1, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function hResize() {
+    var r = hc.getBoundingClientRect();
+    hw = r.width; hh = r.height;
+    hc.width = Math.round(hw * dpr); hc.height = Math.round(hh * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ks = Math.max(0.4, Math.min(1, Math.min(hw, hh) / 100));
   }
-  aResize();
-  new ResizeObserver(aResize).observe(ac);
-
-  function norm(v){var l=Math.hypot(v[0],v[1],v[2])||1;return[v[0]/l,v[1]/l,v[2]/l];}
-  function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
-
-  function atomFrame(now) {
-    requestAnimationFrame(atomFrame);
-    if (!aw || !ah) return;
-    var t = now / 1000;
-
-    actx.clearRect(0, 0, aw, ah);
-
-    var R = Math.min(aw, ah) * SIZE;
-    var cx = aw * CX_FRAC;
-    var cy = ah * CY_FRAC;
-
-    for (var ri = 0; ri < RINGS.length; ri++) {
-      var ring = RINGS[ri];
-
-      // ring plane basis from tilt + roll (+ live wobble)
-      var wob = Math.sin(t * 0.6 + ring.phase) * ring.wob;
-      var n = norm([Math.sin(ring.roll + wob),
-                    Math.cos(ring.tilt) * Math.cos(ring.roll),
-                    Math.sin(ring.tilt) * Math.cos(ring.roll)]);
-      var tmp = Math.abs(n[1]) > 0.9 ? [1,0,0] : [0,1,0];
-      var u = norm(cross(n, tmp));
-      var v = norm(cross(n, u));
-
-      var ang = t * ring.spin + ring.phase;
-      var N = ring.dots;
-
-      for (var i = 0; i < N; i++) {
-        var theta = (i / N) * TAU + ang;
-        var ct = Math.cos(theta), st = Math.sin(theta);
-        var x = u[0]*ct + v[0]*st;
-        var y = u[1]*ct + v[1]*st;
-        var z = u[2]*ct + v[2]*st;
-
-        var d = (z + 1) * 0.5;                  // 0 far .. 1 near
-        var persp = 0.86 + 0.24 * d;
-        var px = cx + x * R * persp;
-        var py = cy - y * R * persp;
-
-        var sizeMul = 0.35 + 0.65 * d;
-        var mix = 0.35 + 0.65 * d;
-        var cr = Math.round(BG_R + (DOT_R - BG_R) * mix);
-        var cg = Math.round(BG_G + (DOT_G - BG_G) * mix);
-        var cb = Math.round(BG_B + (DOT_B - BG_B) * mix);
-
-        var alpha = 0.35 + 0.55 * d;
-        var rad = ring.size * sizeMul;
-        if (rad < 0.35) continue;
-
-        actx.globalAlpha = alpha;
-        actx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
-        actx.beginPath();
-        actx.arc(px, py, rad, 0, TAU);
-        actx.fill();
-      }
-    }
-    actx.globalAlpha = 1;
+  hResize();
+  new ResizeObserver(hResize).observe(hc);
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!hw || !hh) return;
+    ctx.clearRect(0, 0, hw, hh);
+    var t = (now % LOOP) / LOOP;
+    var R = Math.min(hw, hh) * 0.38, cx = hw * 0.78, ay = hh * 0.6, N = 4;
+    var xs = []; for (var i = 0; i < N; i++) xs.push(cx - R + (i / (N - 1)) * R * 2);
+    var x0 = cx - R * 1.5;
+    ctx.beginPath(); ctx.moveTo(x0, ay); ctx.lineTo(cx + R * 1.15, ay); ctx.globalAlpha = 0.12; ctx.strokeStyle = 'rgb(' + DOT_R + ',' + DOT_G + ',' + DOT_B + ')'; ctx.lineWidth = 0.8 * ks; ctx.stroke();
+    xs.forEach(function(x){ dot(x, ay, 3.4 * ks, 0.9, 1); });
+    REQ.forEach(function(q) {
+      var u = q[0], v = q[1], s = q[2], f = (t + u) % 1;
+      var hops = s < 0.5 ? 0 : s < 0.78 ? 1 : s < 0.93 ? 2 : 3;
+      var endX = xs[hops], travel = (endX - x0) / (R * 2.5);
+      if (f < travel * 0.8) { var p = f / (travel * 0.8), x = x0 + p * (endX - x0), lift = (10 + v * 26) * ks, dip = p > 0.75 ? ease((p - 0.75) / 0.25) : 0; dot(x, ay - lift * (1 - dip), 1.7 * ks, 0.7, 0.85); }
+      else if (f < travel * 0.8 + 0.08) { var k = Math.sin((f - travel * 0.8) / 0.08 * Math.PI); dot(endX, ay, (3.4 + k * 2) * ks, 1, 1); }
+      else if (f < travel * 0.8 + 0.4) { var g = ease((f - travel * 0.8 - 0.08) / 0.32); dot(endX, ay + 11 * ks + (hh * 0.98 - ay - 11 * ks) * g, 2 * ks, 1, 1 - g * 0.6); }
+    });
+    ctx.globalAlpha = 1;
   }
-  requestAnimationFrame(atomFrame);
+  requestAnimationFrame(frame);
 })();
 
-// ── Concentric dashed orbit rings inside the Self-Serve Analytics box ──
-// Two orbit layers. Outer layer spins clockwise, inner layer counter-clockwise.
-// Each ring is a dashed circle whose size follows a bell curve tied to its
-// angular position, so the layer breathes as it rotates.
-// Ported from the reference p5 sketch.
-(function initOrbits() {
-  var oc = document.getElementById('orbitsCanvas');
-  if (!oc) return;
-  var octx = oc.getContext('2d');
-  var TAU = Math.PI * 2, PI = Math.PI, HALF_PI = Math.PI / 2;
-
-  // palette matches the rest of the card (near-white on transparent bg)
+// ── Pivot grid inside the Self-Serve Analytics box ──
+(function initPivot() {
+  var pc = document.getElementById('orbitsCanvas');
+  if (!pc) return;
+  var ctx = pc.getContext('2d');
+  var TAU = Math.PI * 2, LOOP = 6000, N = 7;
+  var BG_R = 42, BG_G = 40, BG_B = 56;
   var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
-  // Config — mirrors the p5 sketch's `settings`, but sizes are expressed as
-  // fractions of R so it scales with the card automatically.
-  var CFG = {
-    outerRings:   15,
-    innerRings:   7,
-    outerOrbit:   1.085,
-    innerOrbit:   0.525,
-    outerSpeed:   0.6,
-    innerSpeed:   0.52,
-    outerMin:     0.007,
-    innerMin:     0.012,
-    outerMax:     0.115,
-    innerMax:     0.072,
-    outerWeight:  0.85,
-    innerWeight:  0.7,
-    // third (outermost) ring — bigger, opposite direction from outer
-    thirdRings:   18,
-    thirdOrbit:   1.75,
-    thirdSpeed:   0.49,
-    thirdMin:     0.002,
-    thirdMax:     0.115,
-    thirdWeight:  1.0,
-    flipDirections: false,
-    dashLenFrac:  0.34,
-    gapLenFrac:   0.20,
-    minAlpha:     0.53,
-    maxAlpha:     1.00,
-    sizeFrac:     0.35,
-    cxFrac:       0.815,
-    cyOffset:     0.495
-  };
-
-  var ow = 0, oh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  function oResize() {
-    var r = oc.getBoundingClientRect();
-    ow = r.width; oh = r.height;
-    oc.width = Math.round(ow * dpr); oc.height = Math.round(oh * dpr);
-    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var seed = 13; function rnd(){ seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+  var vals = []; for (var i = 0; i < N * N; i++) vals.push(rnd());
+  var rowPerm = [3,0,5,1,6,2,4], colPerm = [2,5,0,6,3,1,4];
+  function ease(v){ v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); }
+  var pw = 0, ph = 0, ks = 1, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function pResize() {
+    var r = pc.getBoundingClientRect();
+    pw = r.width; ph = r.height;
+    pc.width = Math.round(pw * dpr); pc.height = Math.round(ph * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ks = Math.max(0.4, Math.min(1, Math.min(pw, ph) / 100));
   }
-  oResize();
-  new ResizeObserver(oResize).observe(oc);
-
-  function smoothstep(v) { return v * v * (3 - 2 * v); }
-  function lerp(a, b, t) { return a + (b - a) * t; }
-
-  var last = 0, elapsed = 0;
-
-  function drawDashedRing(cx, cy, radius, alphaFrac, weight) {
-    if (radius <= 0.5) return;
-    octx.beginPath();
-    // dash rhythm proportional to ring size, per the reference sketch
-    var circumference = TAU * radius;
-    var dashLength = Math.max(1.6, radius * CFG.dashLenFrac);
-    var gapLength  = Math.max(1.0, radius * CFG.gapLenFrac);
-    var pattern = dashLength + gapLength;
-    var dashCount = Math.max(5, Math.floor(circumference / pattern));
-    var dashAng = TAU * (dashLength / circumference);
-    var gapAng  = TAU * (gapLength / circumference);
-
-    octx.strokeStyle = 'rgba(' + DOT_R + ',' + DOT_G + ',' + DOT_B + ',' + alphaFrac.toFixed(3) + ')';
-    octx.lineWidth = weight;
-    octx.lineCap = 'round';
-
-    for (var i = 0; i < dashCount; i++) {
-      var start = i * (dashAng + gapAng);
-      var end = start + dashAng;
-      octx.beginPath();
-      octx.arc(cx, cy, radius, start, end);
-      octx.stroke();
+  pResize();
+  new ResizeObserver(pResize).observe(pc);
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!pw || !ph) return;
+    ctx.clearRect(0, 0, pw, ph);
+    var t = (now % LOOP) / LOOP;
+    var R = Math.min(pw, ph) * 0.38, cx = pw * 0.78, side = R * 2, cell = side / N;
+    var fr = ease((t - 0.05) / 0.3), fc = ease((t - 0.55) / 0.3);
+    var back = t > 0.9 ? ease((t - 0.9) / 0.1) : 0;
+    var top = ph - (curPortrait ? -6 : 4) - N * cell * 0.85;
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
+      var v = vals[r * N + c];
+      var rr = r + (rowPerm[r] - r) * fr * (1 - back), cc = c + (colPerm[c] - c) * fc * (1 - back);
+      var x = cx - R + (cc + 0.5) * cell, y = top + (rr + 0.5) * cell * 0.85;
+      var mix = 0.2 + v * 0.8;
+      ctx.globalAlpha = 0.5 + v * 0.5;
+      ctx.fillStyle = 'rgb(' + Math.round(BG_R + (DOT_R - BG_R) * mix) + ',' + Math.round(BG_G + (DOT_G - BG_G) * mix) + ',' + Math.round(BG_B + (DOT_B - BG_B) * mix) + ')';
+      ctx.beginPath(); ctx.arc(x, y, (0.8 + v * 1.6) * ks, 0, TAU); ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
-
-  function drawLayer(cx, cy, R, cfg) {
-    var spacing = TAU / cfg.count;
-    for (var i = 0; i < cfg.count; i++) {
-      var angle = -HALF_PI + cfg.direction * elapsed * cfg.speed + i * spacing + cfg.phase;
-      var phase = ((angle % TAU) + TAU) % TAU;
-      var normalized = phase / TAU;
-      var growth = smoothstep(Math.sin(normalized * PI));
-      var radius = lerp(cfg.minSize, cfg.maxSize, growth) * R;
-      var alpha = lerp(CFG.minAlpha, CFG.maxAlpha, growth);
-      var x = cx + Math.cos(angle) * cfg.orbit * R;
-      var y = cy + Math.sin(angle) * cfg.orbit * R;
-      drawDashedRing(x, y, radius, alpha, cfg.weight);
-    }
-  }
-
-  function orbitsFrame(now) {
-    requestAnimationFrame(orbitsFrame);
-    if (!ow || !oh) return;
-    if (last === 0) last = now;
-    var delta = Math.min((now - last) / 1000, 0.05);
-    last = now;
-    elapsed += delta;
-
-    octx.clearRect(0, 0, ow, oh);
-
-    // placement matches the other cards' footprint
-    var R = Math.min(ow, oh) * CFG.sizeFrac;
-    var cx = ow * CFG.cxFrac;
-    var cy = oh - R * CFG.cyOffset;
-
-    var flip = CFG.flipDirections ? -1 : 1;
-    // outer layer
-    drawLayer(cx, cy, R, {
-      count: CFG.outerRings, orbit: CFG.outerOrbit, speed: CFG.outerSpeed,
-      direction: 1 * flip, minSize: CFG.outerMin, maxSize: CFG.outerMax,
-      weight: CFG.outerWeight, phase: 0
-    });
-
-    // inner layer (opposite direction to outer)
-    drawLayer(cx, cy, R, {
-      count: CFG.innerRings, orbit: CFG.innerOrbit, speed: CFG.innerSpeed,
-      direction: -1 * flip, minSize: CFG.innerMin, maxSize: CFG.innerMax,
-      weight: CFG.innerWeight, phase: PI / 13
-    });
-
-    // third (outermost) layer — opposite direction to the outer layer
-    drawLayer(cx, cy, R, {
-      count: CFG.thirdRings, orbit: CFG.thirdOrbit, speed: CFG.thirdSpeed,
-      direction: -1 * flip, minSize: CFG.thirdMin, maxSize: CFG.thirdMax,
-      weight: CFG.thirdWeight, phase: PI / 7
-    });
-  }
-  requestAnimationFrame(orbitsFrame);
+  requestAnimationFrame(frame);
 })();
 
 // ── Grid wave inside the Document Intelligence box ──
-// Fixed 10x10 grid of squares. A soft Gaussian bump travels across the grid;
-// each square's size = base + gaussian(distance to wave center) * boost.
-// Wave center follows a periodic Lissajous-like path so the loop is seamless.
 (function initGrid() {
   var gc = document.getElementById('gridCanvas');
   if (!gc) return;
   var gctx = gc.getContext('2d');
-
-  // colour palette matches the other animations (near-white on transparent card bg)
   var BG_R = 42, BG_G = 40, BG_B = 56;
   var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
-  var CONFIG = {
-    rows: 10,
-    cols: 10,
-    baseSize: 0.14,      // fraction of cell (small squares at rest)
-    maxSize: 0.85,       // fraction of cell (peak size at wave center)
-    waveRadius: 1.8,     // gaussian sigma, measured in cells
-    duration: 7000       // ms per full loop
-  };
-
+  var CONFIG = { rows: 10, cols: 10, baseSize: 0.14, maxSize: 0.85, waveRadius: 1.8, duration: 7000 };
   var gw = 0, gh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
   function gResize() {
     var r = gc.getBoundingClientRect();
@@ -619,16 +452,11 @@ requestAnimationFrame(tick);
   }
   gResize();
   new ResizeObserver(gResize).observe(gc);
-
   var TAU = Math.PI * 2;
-
   function gridFrame(now) {
     requestAnimationFrame(gridFrame);
     if (!gw || !gh) return;
-
     gctx.clearRect(0, 0, gw, gh);
-
-    // sizing + placement matching voice agents footprint
     var R = Math.min(gw, gh) * 0.35;
     var cx = gw * 0.78;
     var cy = gh - R * 0.95 * 0.45;
@@ -637,45 +465,25 @@ requestAnimationFrame(tick);
     var cellH = side / CONFIG.rows;
     var originX = cx - R;
     var originY = cy - R;
-
-    // Periodic parametric path for the wave center — no manual reset needed.
-    // Two coprime harmonics keep the trajectory organic (not perfectly linear)
-    // and guarantee a seamless loop after `duration`.
-    var t = (now % CONFIG.duration) / CONFIG.duration;   // 0..1
+    var t = (now % CONFIG.duration) / CONFIG.duration;
     var ang = t * TAU;
-    // Lissajous with 1:1 ratios but out-of-phase; centred at (mid, mid) in cell coords
     var midC = (CONFIG.cols - 1) / 2;
     var midR = (CONFIG.rows - 1) / 2;
     var waveC = midC + Math.sin(ang) * (CONFIG.cols * 0.42);
     var waveR = midR + Math.sin(ang * 2 + Math.PI * 0.5) * (CONFIG.rows * 0.28);
-
     var sigma2 = 2 * CONFIG.waveRadius * CONFIG.waveRadius;
-
     for (var rr = 0; rr < CONFIG.rows; rr++) {
       for (var cc = 0; cc < CONFIG.cols; cc++) {
-        // grid position (in cell units) — permanently fixed
-        var dc = cc - waveC;
-        var dr = rr - waveR;
-        var dist2 = dc * dc + dr * dr;
-
-        // Gaussian falloff: 1 at wave center, smoothly to 0 at distance
-        var influence = Math.exp(-dist2 / sigma2);
-
-        // size interpolates between base and max
-        var sizeFrac = CONFIG.baseSize + (CONFIG.maxSize - CONFIG.baseSize) * influence;
-        var s = cellW * sizeFrac;
-
-        // colour + alpha follow influence so the wave has some tonal weight too
+        var dc = cc - waveC, dr = rr - waveR;
+        var influence = Math.exp(-(dc * dc + dr * dr) / sigma2);
+        var s = cellW * (CONFIG.baseSize + (CONFIG.maxSize - CONFIG.baseSize) * influence);
         var mix = 0.45 + 0.55 * influence;
         var cr = Math.round(BG_R + (DOT_R - BG_R) * mix);
         var cg = Math.round(BG_G + (DOT_G - BG_G) * mix);
         var cb = Math.round(BG_B + (DOT_B - BG_B) * mix);
-        var alpha = 0.55 + 0.45 * influence;
-
         var px = originX + (cc + 0.5) * cellW;
         var py = originY + (rr + 0.5) * cellH;
-
-        gctx.globalAlpha = alpha;
+        gctx.globalAlpha = 0.55 + 0.45 * influence;
         gctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
         gctx.fillRect(px - s / 2, py - s / 2, s, s);
       }
@@ -685,151 +493,74 @@ requestAnimationFrame(tick);
   requestAnimationFrame(gridFrame);
 })();
 
-
 // ── Room-corner perspective grid inside the Process Automation box ──
-// Three visible faces of a cube corner viewed from inside. Each face is filled
-// with a regular 2D grid whose lines converge on the central vanishing point,
-// drawn as dots (no strokes). The three faces are: top wedge (ceiling),
-// lower-left wedge (left wall), lower-right wedge (right wall).
 (function initProcess() {
   var pc = document.getElementById('processCanvas');
   if (!pc) return;
   var pctx = pc.getContext('2d');
   var TAU = Math.PI * 2;
-
-  // palette matches the rest of the card
   var BG_R = 42, BG_G = 40, BG_B = 56;
   var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
   var CFG = {
-    grid:            9,
-    perspectivePow:  1.25,
-    depthCurve:      1.95,
-    minSize:         0.3,
-    maxSize:         1.6,
-    LOOP_S:          35.5,
-    swayAmp:         0.085,
-    edgeFade:        0.1,
-    sizeFrac:        0.485,
-    cxFrac:          0.815,
-    cyOffset:        1,
-    edge0Ang:       -3.14,
-    edge1Ang:       -0.38,
-    edge2Ang:        1.57,
-    edge0Len:        1.51,
-    edge1Len:        0.98,
-    edge2Len:        1.3,
-    // pulse — travels outward from vanishing point along the depth axis
-    pulseSpeed:      0.18,
-    pulseWidth:      0.28,
-    pulseBoost:      1.55
+    grid: 9, perspectivePow: 1.25, depthCurve: 1.95, minSize: 0.3, maxSize: 1.6,
+    LOOP_S: 35.5, swayAmp: 0.085, edgeFade: 0.1, sizeFrac: 0.485, cxFrac: 0.815, cyOffset: 1,
+    edge0Ang: -3.14, edge1Ang: -0.38, edge2Ang: 1.57, edge0Len: 1.51, edge1Len: 0.98, edge2Len: 1.3,
+    pulseSpeed: 0.18, pulseWidth: 0.28, pulseBoost: 1.55
   };
-
-  var pw = 0, ph = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var pw = 0, ph = 0, ks = 1, dpr = Math.min(window.devicePixelRatio || 1, 2);
   function pResize() {
     var r = pc.getBoundingClientRect();
     pw = r.width; ph = r.height;
     pc.width = Math.round(pw * dpr); pc.height = Math.round(ph * dpr);
     pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ks = Math.max(0.4, Math.min(1, Math.min(pw, ph) / 100));
   }
   pResize();
   new ResizeObserver(pResize).observe(pc);
-
   function processFrame(now) {
     requestAnimationFrame(processFrame);
     if (!pw || !ph) return;
-
     pctx.clearRect(0, 0, pw, ph);
-
-    // placement matches voice agents footprint
     var R = Math.min(pw, ph) * CFG.sizeFrac;
     var cx = pw * CFG.cxFrac;
     var cy = ph - R * CFG.cyOffset;
-
-    // slow drift of the vanishing point so the frame breathes
     var t = (now / 1000) / CFG.LOOP_S;
     var vpX = cx + Math.sin(t * TAU) * CFG.swayAmp * R;
     var vpY = cy + Math.cos(t * TAU * 0.7) * CFG.swayAmp * R;
-
-    // Three "edge" directions coming out of the vanishing point.
-    // Angles measured in screen space. Straight down, upper-left, upper-right.
-    // Three faces sit between consecutive edges:
-    //   FACE 0 (top wedge)    → between upperLeft and upperRight edges
-    //   FACE 1 (left wall)    → between upperLeft edge and downward edge
-    //   FACE 2 (right wall)   → between downward edge and upperRight edge
     var edges = [
-      { ang: CFG.edge0Ang, len: R * CFG.edge0Len },  // upper-left
-      { ang: CFG.edge1Ang, len: R * CFG.edge1Len },  // upper-right
-      { ang: CFG.edge2Ang, len: R * CFG.edge2Len }   // downward
+      { ang: CFG.edge0Ang, len: R * CFG.edge0Len },
+      { ang: CFG.edge1Ang, len: R * CFG.edge1Len },
+      { ang: CFG.edge2Ang, len: R * CFG.edge2Len }
     ];
-
-    // Face triangle definitions in terms of (edgeA, edgeB) whose outer endpoints
-    // become two of the triangle's vertices. Vanishing point is the third vertex.
-    var faces = [
-      [0, 1], // top wedge (between the two upper edges)
-      [0, 2], // left wall (between upper-left and downward)
-      [2, 1]  // right wall (between downward and upper-right)
-    ];
-
-    // depth-axis pulse — a moving position along `depth` in 0..1 that briefly
-    // boosts size and tone as it passes each dot's depth band.
+    var faces = [[0, 1], [0, 2], [2, 1]];
     var pt = (now / 1000) * CFG.pulseSpeed;
     var pphase = pt - Math.floor(pt);
-    var wavePos = pphase < 0.5 ? pphase * 2 : 2 - pphase * 2;   // ping-pong
+    var wavePos = pphase < 0.5 ? pphase * 2 : 2 - pphase * 2;
     var psigma2 = 2 * CFG.pulseWidth * CFG.pulseWidth;
-
     for (var f = 0; f < faces.length; f++) {
-      var eA = edges[faces[f][0]];
-      var eB = edges[faces[f][1]];
-
-      // Outer corners of this face (endpoints of the two bounding edges)
-      var ax = Math.cos(eA.ang) * eA.len;
-      var ay = Math.sin(eA.ang) * eA.len;
-      var bx = Math.cos(eB.ang) * eB.len;
-      var by = Math.sin(eB.ang) * eB.len;
-
-      // Fill the face with a grid. `u` runs along edge A (0 at VP → 1 at outer),
-      // `v` runs along edge B (0 at VP → 1 at outer). Both use nonlinear spacing
-      // so dots crowd near the vanishing point and spread toward the outer corners.
+      var eA = edges[faces[f][0]], eB = edges[faces[f][1]];
+      var ax = Math.cos(eA.ang) * eA.len, ay = Math.sin(eA.ang) * eA.len;
+      var bx = Math.cos(eB.ang) * eB.len, by = Math.sin(eB.ang) * eB.len;
       for (var i = 1; i <= CFG.grid; i++) {
         for (var j = 1; j <= CFG.grid; j++) {
-          var tu = i / CFG.grid;
-          var tv = j / CFG.grid;
-          // perspective compression along each axis
-          var u = Math.pow(tu, CFG.perspectivePow);
-          var v = Math.pow(tv, CFG.perspectivePow);
-          // world-to-screen: linear blend from vp toward each outer corner
-          // (this is the flat perspective — no true 3D, just projection).
+          var u = Math.pow(i / CFG.grid, CFG.perspectivePow);
+          var v = Math.pow(j / CFG.grid, CFG.perspectivePow);
           var x = vpX + ax * u + bx * v;
           var y = vpY + ay * u + by * v;
-
-          // depth proxy: how far from the vanishing point along the face's
-          // dominant direction. Use max of u,v so corners still read as "near".
           var depth = Math.max(u, v);
           var dNear = Math.pow(depth, CFG.depthCurve);
-
-          // pulse influence at this depth band
           var pd = depth - wavePos;
           var pInfl = Math.exp(-(pd * pd) / psigma2);
           var pulseMul = 1 + (CFG.pulseBoost - 1) * pInfl;
-
-          // dot size grows toward the foreground, boosted by pulse
-          var size = (CFG.minSize + (CFG.maxSize - CFG.minSize) * dNear) * pulseMul;
-
-          // colour + alpha: near the vanishing point the dots blend toward bg;
-          // pulse lifts the tone briefly toward full near-white
+          var size = (CFG.minSize + (CFG.maxSize - CFG.minSize) * dNear) * pulseMul * ks;
           var baseMix = 0.35 + 0.65 * dNear;
           var mix = baseMix + (1 - baseMix) * pInfl;
           var cr = Math.round(BG_R + (DOT_R - BG_R) * mix);
           var cg = Math.round(BG_G + (DOT_G - BG_G) * mix);
           var cb = Math.round(BG_B + (DOT_B - BG_B) * mix);
-
-          // edge fade: dots at the outermost ring soften into the bg
-          var edgeF = depth > (1 - CFG.edgeFade)
-            ? Math.max(0, 1 - (depth - (1 - CFG.edgeFade)) / CFG.edgeFade) : 1;
+          var edgeF = depth > (1 - CFG.edgeFade) ? Math.max(0, 1 - (depth - (1 - CFG.edgeFade)) / CFG.edgeFade) : 1;
           var alpha = (0.4 + 0.6 * dNear) * edgeF;
-
-          if (size < 0.25 || alpha < 0.02) continue;
+          if (size < 0.15 || alpha < 0.02) continue;
           pctx.globalAlpha = alpha;
           pctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
           pctx.beginPath();
@@ -843,400 +574,112 @@ requestAnimationFrame(tick);
   requestAnimationFrame(processFrame);
 })();
 
-// ── Thinking Orb (crescent-lit) inside the Ops Copilots box ──
-// Inner sphere lattice + outer particle halo. Both are lit by a moving
-// "crescent" light band whose direction differs between inner and outer.
-// Ported from the reference Thinking_Orb (v2) sketch. Palette matches the
-// rest of the card set: near-white on transparent card BG.
-(function initAmoeba() {
-  var host = document.getElementById('amoebaCanvas');
-  if (!host) return;
-  var ctx = host.getContext('2d');
-  var TAU = Math.PI * 2;
-
-  // ── LIVE CONFIG ──
-  var CFG = {
-    // inner sphere lattice
-    rows:             32,
-    density:          0.4,
-    dotSize:          1.0,
-    sparse:           0.72,
-    speed:            0.22,
-    tilt:            -0.94,
-
-    // crescent lighting
-    crescentSpeed:    0.5,
-    crescentWidth:    1.15,
-    crescentFloor:    0.26,
-    crescentIntensity: 0.65,
-    crescentDrift:    0.0,
-
-    // outer halo
-    outerRadius:      1.28,
-    outerCount:       2050,
-    outerBackOpacity: 0.0,
-    outerEdge:        0.62,
-    outerSpeedBoost:  2.45,
-
-    // placement
-    sizeFrac:         0.405,
-    cxFrac:           0.775,
-    cyOffset:         0.76
-  };
-
-  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
-  function smoothstep(u){var v=Math.max(0,Math.min(1,u));return v*v*(3-2*v);}
-
-  function buildPoints(rows, density){
-    var pts=[];
-    for(var i=0;i<rows;i++){
-      var theta=Math.PI*(i+0.5)/rows;
-      var count=Math.max(3,Math.round(Math.sin(theta)*rows*2.15*density));
-      var st=Math.sin(theta),ct=Math.cos(theta);
-      for(var j=0;j<count;j++){
-        var phi=(j/count)*TAU+(i%2)*(Math.PI/count);
-        pts.push({b:[st*Math.cos(phi),ct,st*Math.sin(phi)],
-                  jitter:0.55+Math.random()*0.45,
-                  keep:Math.random(),twk:Math.random()*TAU});
-      }
-    }
-    return pts;
-  }
-
-  function buildOuter(n){
-    var arr=[];
-    for(var i=0;i<n;i++){
-      var z=Math.random()*2-1, a=Math.random()*TAU, s=Math.sqrt(1-z*z);
-      arr.push({b:[s*Math.cos(a),z,s*Math.sin(a)],
-                jitter:0.5+Math.random()*0.5,
-                twk:Math.random()*TAU});
-    }
-    return arr;
-  }
-
-  var pts, outer;
-  function rebuild(){
-    pts = buildPoints(CFG.rows, CFG.density);
-    outer = buildOuter(CFG.outerCount);
-  }
-  rebuild();
-
-  var hw=0, hh=0, dpr=Math.min(window.devicePixelRatio||1,2);
-  function hResize(){
-    var r=host.getBoundingClientRect();
-    hw=r.width; hh=r.height;
-    host.width=Math.round(hw*dpr); host.height=Math.round(hh*dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  hResize();
-  new ResizeObserver(hResize).observe(host);
-
-  var t0=performance.now();
-  function orbFrame(now){
-    requestAnimationFrame(orbFrame);
-    if(!hw||!hh)return;
-    var t=(now-t0)/1000;
-
-    var R = Math.min(hw,hh)*CFG.sizeFrac;
-    var cx = hw*CFG.cxFrac;
-    var cy = hh - R*CFG.cyOffset;
-    var r = R;
-
-    ctx.clearRect(0,0,hw,hh);
-
-    var yaw = t*CFG.speed;
-    var sinT=Math.sin(CFG.tilt), cosT=Math.cos(CFG.tilt);
-    var cyw=Math.cos(yaw), syw=Math.sin(yaw);
-
-    // crescent light basis
-    var cEl = Math.sin(t*CFG.crescentSpeed*0.31)*CFG.crescentDrift;
-    var cosE=Math.cos(cEl), sinE=Math.sin(cEl);
-    var sAz = t*(CFG.speed+CFG.crescentSpeed);
-    var sL1 = [Math.sin(sAz)*cosE, sinE, Math.cos(sAz)*cosE];
-    var sW2 = sAz + CFG.crescentWidth;
-    var sL2 = [Math.sin(sW2)*cosE, sinE, Math.cos(sW2)*cosE];
-
-    // outer crescent basis (opposite spin)
-    var cAz = -t*(CFG.speed+CFG.crescentSpeed)*CFG.outerSpeedBoost;
-    var cL1 = [Math.sin(cAz)*cosE, sinE, Math.cos(cAz)*cosE];
-    var w2 = cAz + CFG.crescentWidth;
-    var cL2 = [Math.sin(w2)*cosE, sinE, Math.cos(w2)*cosE];
-
-    // ── inner sphere ──
-    for(var i=0;i<pts.length;i++){
-      var q=pts[i], b=q.b;
-      var x1=b[0]*cyw+b[2]*syw;
-      var z1=-b[0]*syw+b[2]*cyw;
-      var x=x1*r;
-      var vy=b[1]*cosT - z1*sinT;
-      var vz=b[1]*sinT + z1*cosT;
-      var y2=vy*r, z2=vz*r;
-
-      var a1=x1*sL1[0]+vy*sL1[1]+vz*sL1[2];
-      var a2=x1*sL2[0]+vy*sL2[1]+vz*sL2[2];
-      var lit=smoothstep(a1/0.62);
-      var bite=smoothstep(-a2/0.55);
-      var cgl=lit*bite;
-      var aMul = CFG.crescentFloor + cgl*CFG.crescentIntensity;
-      var sMul = 1 + cgl*0.85;
-
-      var d = (z2+r)/(2*r);
-      var cullFade = 1;
-      if(d<0.5){
-        var thr=0.25+d*2*CFG.sparse;
-        cullFade=(thr-q.keep)/0.16+0.5;
-        if(cullFade<=0)continue;
-        if(cullFade>1)cullFade=1;
-        cullFade=cullFade*cullFade*(3-2*cullFade);
-      }
-
-      var persp=0.82+0.28*d;
-      var px=cx+x*persp, py=cy+y2*persp;
-      var twinkle=0.9+0.1*Math.sin(t*1.4+q.twk);
-      var alpha=Math.min(255,(14+230*Math.pow(d,1.9))*q.jitter*twinkle*cullFade*aMul);
-      if(alpha<2)continue;
-      var s=CFG.dotSize*(0.72+0.62*d)*sMul;
-      ctx.fillStyle='rgba('+DOT_R+','+DOT_G+','+DOT_B+','+(alpha/255).toFixed(3)+')';
-      ctx.fillRect(px-s/2, py-s/2, s, s);
-    }
-
-    // ── outer halo ──
-    var oR = r*CFG.outerRadius;
-    var oYaw = cAz;
-    var ocy=Math.cos(oYaw), osy=Math.sin(oYaw);
-    for(var i2=0;i2<outer.length;i2++){
-      var q2=outer[i2], b2=q2.b;
-      var x1o=b2[0]*ocy+b2[2]*osy;
-      var z1o=-b2[0]*osy+b2[2]*ocy;
-      var vyo=b2[1]*cosT - z1o*sinT;
-      var vzo=b2[1]*sinT + z1o*cosT;
-
-      var a1o=x1o*cL1[0]+vyo*cL1[1]+vzo*cL1[2];
-      var a2o=x1o*cL2[0]+vyo*cL2[1]+vzo*cL2[2];
-      var lito=smoothstep(a1o/CFG.outerEdge);
-      var biteo=smoothstep(-a2o/(CFG.outerEdge*0.89));
-      var cglo=lito*biteo;
-      if(cglo<0.02)continue;
-
-      var doo=(vzo+1)/2;
-      var backFade = doo<0.5 ? (CFG.outerBackOpacity+(1-CFG.outerBackOpacity)*(doo/0.5)) : 1;
-      var pxo=cx+x1o*oR*(0.82+0.28*doo);
-      var pyo=cy+vyo*oR*(0.82+0.28*doo);
-      var twinkleo=0.85+0.15*Math.sin(t*1.8+q2.twk);
-      var alphao=Math.min(255, cglo*255*q2.jitter*twinkleo*backFade);
-      var so=CFG.dotSize*(0.9+0.55*doo);
-      ctx.fillStyle='rgba('+DOT_R+','+DOT_G+','+DOT_B+','+(alphao/255).toFixed(3)+')';
-      ctx.fillRect(pxo-so/2, pyo-so/2, so, so);
-    }
-  }
-  requestAnimationFrame(orbFrame);
-})();
-
-// ── Plain rotating dot sphere inside the Knowledge Search box ──
-// Same lattice + rotation as the Ops Copilots orb, but no crescent light,
-// no outer halo, no layer snaps — just the sphere spinning with a mild depth
-// fade so far-side dots dim naturally.
-(function initSphereOnly() {
-  var host = document.getElementById('knowledgeCanvas');
-  if (!host) return;
-  var ctx = host.getContext('2d');
-  var TAU = Math.PI * 2;
-
-  // matches Ops Copilots' inner-sphere config
-  var CFG = {
-    rows:      32,
-    density:   0.4,
-    dotSize:   1.0,
-    sparse:    0.72,
-    speed:     0.22,
-    tilt:     -0.94,
-    sizeFrac:  0.35,
-    cxFrac:    0.78,
-    cyOffset:  0.4275
-  };
-
-  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
-  function buildPoints(rows, density) {
-    var pts = [];
-    for (var i = 0; i < rows; i++) {
-      var theta = Math.PI * (i + 0.5) / rows;
-      var count = Math.max(3, Math.round(Math.sin(theta) * rows * 2.15 * density));
-      var st = Math.sin(theta), ct = Math.cos(theta);
-      for (var j = 0; j < count; j++) {
-        var phi = (j / count) * TAU + (i % 2) * (Math.PI / count);
-        pts.push({
-          b: [st * Math.cos(phi), ct, st * Math.sin(phi)],
-          jitter: 0.55 + Math.random() * 0.45,
-          keep: Math.random(),
-          twk: Math.random() * TAU
-        });
-      }
-    }
-    return pts;
-  }
-  var pts = buildPoints(CFG.rows, CFG.density);
-
-  var hw = 0, hh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  function hResize() {
-    var r = host.getBoundingClientRect();
-    hw = r.width; hh = r.height;
-    host.width = Math.round(hw * dpr); host.height = Math.round(hh * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  hResize();
-  new ResizeObserver(hResize).observe(host);
-
-  var t0 = performance.now();
-  function sphereFrame(now) {
-    requestAnimationFrame(sphereFrame);
-    if (!hw || !hh) return;
-    var t = (now - t0) / 1000;
-
-    var R = Math.min(hw, hh) * CFG.sizeFrac;
-    var cx = hw * CFG.cxFrac;
-    var cy = hh - R * CFG.cyOffset;
-    var r = R;
-
-    ctx.clearRect(0, 0, hw, hh);
-
-    var yaw = t * CFG.speed;
-    var sinT = Math.sin(CFG.tilt), cosT = Math.cos(CFG.tilt);
-    var cyw = Math.cos(yaw), syw = Math.sin(yaw);
-
-    for (var i = 0; i < pts.length; i++) {
-      var q = pts[i], b = q.b;
-      var x1 = b[0] * cyw + b[2] * syw;
-      var z1 = -b[0] * syw + b[2] * cyw;
-      var vy = b[1] * cosT - z1 * sinT;
-      var vz = b[1] * sinT + z1 * cosT;
-      var x = x1 * r, y2 = vy * r, z2 = vz * r;
-      var d = (z2 + r) / (2 * r);        // 0 = back, 1 = front
-
-      // cull back-side dots the same way the Ops orb does
-      var cullFade = 1;
-      if (d < 0.5) {
-        var thr = 0.25 + d * 2 * CFG.sparse;
-        cullFade = (thr - q.keep) / 0.16 + 0.5;
-        if (cullFade <= 0) continue;
-        if (cullFade > 1) cullFade = 1;
-        cullFade = cullFade * cullFade * (3 - 2 * cullFade);
-      }
-
-      var persp = 0.82 + 0.28 * d;
-      var px = cx + x * persp, py = cy + y2 * persp;
-      var twinkle = 0.9 + 0.1 * Math.sin(t * 1.4 + q.twk);
-      // uniform brightness with mild depth fade — no crescent
-      var alpha = Math.min(255, (60 + 195 * Math.pow(d, 1.2)) * q.jitter * twinkle * cullFade);
-      if (alpha < 2) continue;
-      var s = CFG.dotSize * (0.72 + 0.62 * d);
-      ctx.fillStyle = 'rgba(' + DOT_R + ',' + DOT_G + ',' + DOT_B + ',' + (alpha / 255).toFixed(3) + ')';
-      ctx.fillRect(px - s / 2, py - s / 2, s, s);
-    }
-  }
-  requestAnimationFrame(sphereFrame);
-})();
-
-// ── Grid wave inside the Document Intelligence box ──
-// Fixed 10x10 grid of squares. A soft Gaussian bump travels across the grid;
-// each square's size = base + gaussian(distance to wave center) * boost.
-// Wave center follows a periodic Lissajous-like path so the loop is seamless.
-(function initGrid() {
-  var gc = document.getElementById('gridCanvas');
-  if (!gc) return;
-  var gctx = gc.getContext('2d');
-
-  // colour palette matches the other animations (near-white on transparent card bg)
+// ── Steadying wave mesh inside the Ops Copilots box ──
+(function initSteadyMesh() {
+  var mc = document.getElementById('amoebaCanvas');
+  if (!mc) return;
+  var ctx = mc.getContext('2d');
+  var TAU = Math.PI * 2, LOOP = 6000, COLS = 22, ROWS = 14;
   var BG_R = 42, BG_G = 40, BG_B = 56;
   var DOT_R = 200, DOT_G = 198, DOT_B = 210;
-
-  var CONFIG = {
-    rows: 10,
-    cols: 10,
-    baseSize: 0.14,      // fraction of cell (small squares at rest)
-    maxSize: 0.85,       // fraction of cell (peak size at wave center)
-    waveRadius: 1.8,     // gaussian sigma, measured in cells
-    duration: 7000       // ms per full loop
-  };
-
-  var gw = 0, gh = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  function gResize() {
-    var r = gc.getBoundingClientRect();
-    gw = r.width; gh = r.height;
-    gc.width = Math.round(gw * dpr); gc.height = Math.round(gh * dpr);
-    gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var SENT = [[5,9],[12,6],[17,11],[9,12]];
+  function ease(v){ v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); }
+  function col(mix){ return 'rgb(' + Math.round(BG_R + (DOT_R - BG_R) * mix) + ',' + Math.round(BG_G + (DOT_G - BG_G) * mix) + ',' + Math.round(BG_B + (DOT_B - BG_B) * mix) + ')'; }
+  function dot(x, y, r, mix, a){ ctx.globalAlpha = a; ctx.fillStyle = col(mix); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+  function roll(u, v, t){ return Math.sin(u * TAU * 1.2 + t * TAU) * 0.6 + Math.sin(v * TAU * 0.9 - t * TAU + u * 2) * 0.4; }
+  var mw = 0, mh = 0, ks = 1, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function mResize() {
+    var r = mc.getBoundingClientRect();
+    mw = r.width; mh = r.height;
+    mc.width = Math.round(mw * dpr); mc.height = Math.round(mh * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ks = Math.max(0.4, Math.min(1, Math.min(mw, mh) / 100));
   }
-  gResize();
-  new ResizeObserver(gResize).observe(gc);
-
-  var TAU = Math.PI * 2;
-
-  function gridFrame(now) {
-    requestAnimationFrame(gridFrame);
-    if (!gw || !gh) return;
-
-    gctx.clearRect(0, 0, gw, gh);
-
-    // sizing + placement matching voice agents footprint
-    var R = Math.min(gw, gh) * 0.35;
-    var cx = gw * 0.78;
-    var cy = gh - R * 0.95 * 0.45;
-    var side = R * 2;
-    var cellW = side / CONFIG.cols;
-    var cellH = side / CONFIG.rows;
-    var originX = cx - R;
-    var originY = cy - R;
-
-    // Periodic parametric path for the wave center — no manual reset needed.
-    // Two coprime harmonics keep the trajectory organic (not perfectly linear)
-    // and guarantee a seamless loop after `duration`.
-    var t = (now % CONFIG.duration) / CONFIG.duration;   // 0..1
-    var ang = t * TAU;
-    // Lissajous with 1:1 ratios but out-of-phase; centred at (mid, mid) in cell coords
-    var midC = (CONFIG.cols - 1) / 2;
-    var midR = (CONFIG.rows - 1) / 2;
-    var waveC = midC + Math.sin(ang) * (CONFIG.cols * 0.42);
-    var waveR = midR + Math.sin(ang * 2 + Math.PI * 0.5) * (CONFIG.rows * 0.28);
-
-    var sigma2 = 2 * CONFIG.waveRadius * CONFIG.waveRadius;
-
-    for (var rr = 0; rr < CONFIG.rows; rr++) {
-      for (var cc = 0; cc < CONFIG.cols; cc++) {
-        // grid position (in cell units) — permanently fixed
-        var dc = cc - waveC;
-        var dr = rr - waveR;
-        var dist2 = dc * dc + dr * dr;
-
-        // Gaussian falloff: 1 at wave center, smoothly to 0 at distance
-        var influence = Math.exp(-dist2 / sigma2);
-
-        // size interpolates between base and max
-        var sizeFrac = CONFIG.baseSize + (CONFIG.maxSize - CONFIG.baseSize) * influence;
-        var s = cellW * sizeFrac;
-
-        // colour + alpha follow influence so the wave has some tonal weight too
-        var mix = 0.45 + 0.55 * influence;
-        var cr = Math.round(BG_R + (DOT_R - BG_R) * mix);
-        var cg = Math.round(BG_G + (DOT_G - BG_G) * mix);
-        var cb = Math.round(BG_B + (DOT_B - BG_B) * mix);
-        var alpha = 0.55 + 0.45 * influence;
-
-        var px = originX + (cc + 0.5) * cellW;
-        var py = originY + (rr + 0.5) * cellH;
-
-        gctx.globalAlpha = alpha;
-        gctx.fillStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
-        gctx.fillRect(px - s / 2, py - s / 2, s, s);
+  mResize();
+  new ResizeObserver(mResize).observe(mc);
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!mw || !mh) return;
+    ctx.clearRect(0, 0, mw, mh);
+    var t = (now % LOOP) / LOOP;
+    var calm = t < 0.15 ? 0 : t < 0.55 ? ease((t - 0.15) / 0.4) : t < 0.7 ? 1 : 1 - ease((t - 0.7) / 0.3);
+    var nearW = mw * 0.72, farW = mw * 0.36, nearY = mh * 1.02, farY = mh * 0.5, cxN = mw * 0.74, cxF = mw * 0.78;
+    var P = [];
+    for (var r = 0; r < ROWS; r++) {
+      var v = r / (ROWS - 1), depth = Math.pow(v, 1.35), y = farY + (nearY - farY) * depth, ww = farW + (nearW - farW) * depth, cx = cxF + (cxN - cxF) * depth;
+      var row = [];
+      for (var c = 0; c < COLS; c++) {
+        var u = c / (COLS - 1);
+        var z = roll(u, v, t) * (1 + 1.4 * (1 - calm)) + Math.sin(u * 31 + v * 17 + t * TAU * 6) * 0.5 * (1 - calm);
+        row.push({ x: cx + (u - 0.5) * ww, y: y - z * (8 + 16 * depth) * ks, d: depth });
       }
+      P.push(row);
     }
-    gctx.globalAlpha = 1;
+    P.forEach(function(row){ row.forEach(function(p){ dot(p.x, p.y, (0.6 + 1.1 * p.d) * ks, 0.3 + 0.6 * p.d, 0.35 + 0.6 * p.d); }); });
+    SENT.forEach(function(s, i){ var ap = ease((t - 0.15 - i * 0.1) / 0.1) * (1 - ease((t - 0.68 - i * 0.05) / 0.14)); if (ap <= 0) return; var p = P[s[1]][s[0]]; dot(p.x, p.y, 2 * ap * ks, 1, 0.85 * ap); });
+    ctx.globalAlpha = 1;
   }
-  requestAnimationFrame(gridFrame);
+  requestAnimationFrame(frame);
 })();
 
-
-
+// ── Knowledge graph inside the Knowledge Search box (appear → link → read) ──
+(function initKnowledgeGraph() {
+  var kc = document.getElementById('knowledgeCanvas');
+  if (!kc) return;
+  var ctx = kc.getContext('2d');
+  var TAU = Math.PI * 2, LOOP = 10000;
+  var BG_R = 42, BG_G = 40, BG_B = 56;
+  var DOT_R = 200, DOT_G = 198, DOT_B = 210;
+  var NODES = [
+    {x:0.55,y:0.55,r:3.2,lvl:0},
+    {x:0.30,y:0.30,r:2.2,lvl:1},{x:0.78,y:0.28,r:2.2,lvl:1},{x:0.82,y:0.70,r:2.2,lvl:1},{x:0.35,y:0.80,r:2.2,lvl:1},{x:0.58,y:0.20,r:2.0,lvl:1},
+    {x:0.12,y:0.18,r:1.6,lvl:2},{x:0.14,y:0.45,r:1.6,lvl:2},{x:0.94,y:0.14,r:1.6,lvl:2},{x:0.96,y:0.50,r:1.6,lvl:2},{x:0.98,y:0.88,r:1.6,lvl:2},{x:0.62,y:0.92,r:1.6,lvl:2},{x:0.12,y:0.88,r:1.6,lvl:2},{x:0.42,y:0.06,r:1.6,lvl:2},{x:0.74,y:0.06,r:1.6,lvl:2}
+  ];
+  var EDGES = [[0,1],[0,2],[0,3],[0,4],[0,5],[1,6],[1,7],[2,8],[2,9],[3,9],[3,10],[4,11],[4,12],[5,13],[5,14],[3,11]];
+  var FOCUS = [0,1,2,3,4,5];
+  function ease(v){ v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); }
+  function col(mix){ return 'rgb(' + Math.round(BG_R + (DOT_R - BG_R) * mix) + ',' + Math.round(BG_G + (DOT_G - BG_G) * mix) + ',' + Math.round(BG_B + (DOT_B - BG_B) * mix) + ')'; }
+  function dot(x, y, r, mix, a){ ctx.globalAlpha = a; ctx.fillStyle = col(mix); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+  function line(a, b, alpha, width){ ctx.globalAlpha = alpha; ctx.strokeStyle = 'rgb(' + DOT_R + ',' + DOT_G + ',' + DOT_B + ')'; ctx.lineWidth = width; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  var kw = 0, kh = 0, ks = 1, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function kResize() {
+    var r = kc.getBoundingClientRect();
+    kw = r.width; kh = r.height;
+    kc.width = Math.round(kw * dpr); kc.height = Math.round(kh * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ks = Math.max(0.4, Math.min(1, Math.min(kw, kh) / 100));
+  }
+  kResize();
+  new ResizeObserver(kResize).observe(kc);
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!kw || !kh) return;
+    ctx.clearRect(0, 0, kw, kh);
+    var t = (now % LOOP) / LOOP;
+    // scale offsets with canvas (reference: 210px card → 147px canvas, +22px down, +18px right)
+    var R = Math.min(kw, kh) * 0.42, cx = kw * 0.68 + kw * 0.086, cy = kh * 0.52 + kh * 0.15;
+    var P = NODES.map(function(n){ return [cx + (n.x - 0.5) * R * 1.85, cy + (n.y - 0.5) * R * 1.9]; });
+    var fade = t > 0.9 ? 1 - ease((t - 0.9) / 0.1) : 1;
+    var lvlT = [ease(t / 0.05), ease((t - 0.05) / 0.08), ease((t - 0.13) / 0.09)];
+    var E = EDGES.length, prog = t < 0.25 ? 0 : t < 0.55 ? (t - 0.25) / 0.3 * E : E;
+    var hp = (t - 0.58) / 0.32 * FOCUS.length;
+    var focus = (t >= 0.58 && t < 0.9) ? FOCUS[Math.floor(hp)] : -1;
+    var k = focus >= 0 ? Math.sin((hp - Math.floor(hp)) * Math.PI) : 0;
+    EDGES.forEach(function(e, i) {
+      var q = Math.max(0, Math.min(1, prog - i)); if (q <= 0) return;
+      var A = P[e[0]], B = P[e[1]], hot = (e[0] === focus || e[1] === focus) ? k : 0;
+      line(A, [A[0] + (B[0] - A[0]) * q, A[1] + (B[1] - A[1]) * q], (q < 1 ? 0.9 : 0.3 + 0.6 * hot) * fade, ((q < 1 || hot > 0) ? 1.1 : 0.8) * ks);
+      if (q < 1) dot(A[0] + (B[0] - A[0]) * q, A[1] + (B[1] - A[1]) * q, 2 * ks, 1, fade);
+    });
+    NODES.forEach(function(n, i) {
+      var ap = lvlT[n.lvl]; if (ap <= 0) return;
+      var lit = i === focus ? k : 0, base = 0.45 + 0.55 * (1 - n.lvl * 0.3);
+      dot(P[i][0], P[i][1], (n.r * Math.min(1, ap * 1.2) + 1.5 * lit) * ks, base + (1 - base) * lit, (0.6 + 0.4 * (1 - n.lvl * 0.25)) * fade);
+    });
+    ctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(frame);
+})();
 </script>
 </body>
 </html>
