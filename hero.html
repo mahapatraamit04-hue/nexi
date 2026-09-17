@@ -29,12 +29,12 @@
 // Breathing: ±5% sine on an inner wrapper, per-tile phase ~π apart (bph).
 const NODES = [
   { id:'energy',    label:'SUPPORT<br>AGENTS',        base:144, mbase:80,  lcx:393,  lcy:760, mfx:0.89, mfy:0.72, ax:22, ay:24, sp:6.0, ph:0.0, bph:0.0 },
-  { id:'infra',     label:'VOICE AGENTS',          base:110, mbase:90,  lcx:547,  lcy:200, mfx:0.15, mfy:0.76, ax:26, ay:18, sp:7.2, ph:1.1, bph:3.3 },
-  { id:'insurance', label:'DOCUMENT INTELLIGENCE', base:168, mbase:96,  lcx:190,  lcy:330, mfx:0.55, mfy:0.86, ax:28, ay:22, sp:7.5, ph:2.3, bph:0.4 },
-  { id:'health',    label:'KNOWLEDGE SEARCH',      base:116, mbase:100, lcx:1420, lcy:235, mfx:0.13, mfy:0.21, ax:22, ay:20, sp:6.6, ph:0.7, bph:3.0 },
-  { id:'consumer',  label:'PROCESS AUTOMATION',    base:132, mbase:63,  lcx:1727, lcy:380, mfx:0.68, mfy:0.16, ax:28, ay:20, sp:8.0, ph:3.1, bph:0.2 },
-  { id:'life',      label:'OPS COPILOTS',          base:116, mbase:90,  lcx:1190, lcy:845, mfx:0.96, mfy:0.3, ax:26, ay:20, sp:7.0, ph:1.8, bph:3.5 },
-  { id:'retail',    label:'SELF-SERVE ANALYTICS',  base:170, mbase:80,  lcx:1713, lcy:800, mfx:0.44, mfy:0.29, ax:26, ay:24, sp:8.5, ph:0.4, bph:0.6 },
+  { id:'infra',     label:'VOICE<br>AGENTS',          base:110, mbase:90,  lcx:547,  lcy:200, mfx:0.15, mfy:0.76, ax:26, ay:18, sp:7.2, ph:1.1, bph:3.3 },
+  { id:'insurance', label:'DOCUMENT<br>INTELLIGENCE', base:168, mbase:96,  lcx:190,  lcy:330, mfx:0.55, mfy:0.86, ax:28, ay:22, sp:7.5, ph:2.3, bph:0.4 },
+  { id:'health',    label:'KNOWLEDGE<br>SEARCH',      base:116, mbase:100, lcx:1420, lcy:235, mfx:0.13, mfy:0.21, ax:22, ay:20, sp:6.6, ph:0.7, bph:3.0 },
+  { id:'consumer',  label:'PROCESS<br>AUTOMATION',    base:132, mbase:63,  lcx:1727, lcy:380, mfx:0.68, mfy:0.16, ax:28, ay:20, sp:8.0, ph:3.1, bph:0.2 },
+  { id:'life',      label:'OPS<br>COPILOTS',          base:116, mbase:90,  lcx:1190, lcy:845, mfx:0.96, mfy:0.3, ax:26, ay:20, sp:7.0, ph:1.8, bph:3.5 },
+  { id:'retail',    label:'SELF-SERVE<br>ANALYTICS',  base:170, mbase:80,  lcx:1713, lcy:800, mfx:0.44, mfy:0.29, ax:26, ay:24, sp:8.5, ph:0.4, bph:0.6 },
 ];
 NODES.forEach(n => { n.w = n.h = Math.round(n.base * 1900 / 1550); n.bamp = n.base <= 116 ? 0.025 : 0.05; });
 const LINKS = [
@@ -70,7 +70,7 @@ NODES.forEach(n => {
   el.style.cssText = `position:absolute;left:0;top:0;width:${n.w}px;height:${n.h}px;will-change:transform;`;
   const extraHTML = `<canvas id="${CANVAS_ID[n.id]}" style="position:absolute;bottom:0;left:0;width:100%;height:70%;pointer-events:none;border-radius:0 0 20px 20px;"></canvas>`;
   el.innerHTML = `<div class="intro" style="width:100%;height:100%;will-change:transform,opacity;transform:scale(0);opacity:0;"><div class="breath" style="width:100%;height:100%;will-change:transform;"><div class="card" style="position:relative;width:100%;height:100%;border-radius:20px;background:#2a2838;overflow:hidden;">
-    <div class="lbl" style="position:absolute;top:14px;left:14px;right:14px;font-size:15px;line-height:1.3;letter-spacing:1px;color:#f2f2f2;z-index:2;">${n.label}</div>
+    <div class="lbl" style="position:absolute;top:14px;left:14px;right:14px;font-size:15px;line-height:1.3;letter-spacing:1px;color:#f2f2f2;z-index:2;white-space:nowrap;">${n.label}</div>
     ${extraHTML}
   </div></div></div>`;
   root.appendChild(el);
@@ -114,11 +114,12 @@ const PORTRAIT_MAX_WIDTH = 768;
 // Stage = the host viewport (same placement logic as hero-responsive): tile x/y are fractions of
 // width/height, tile size scales with width. Portrait uses the mobile arrangement (mfx/mfy, mbase).
 function applyScale() {
-  const cw = host.clientWidth, ch = host.clientHeight;
+  const hw = host.clientWidth, ch = host.clientHeight;
+  const cw = Math.min(hw, 1920); // cap the stage at 1920 on 2K+ monitors, centred
   const portrait = window.innerWidth < PORTRAIT_MAX_WIDTH;
   curPortrait = portrait;
   stageW = cw; stageH = ch; scale = 1;
-  root.style.transform = 'none';
+  root.style.transform = `translate(${Math.round((hw - cw) / 2)}px,0)`;
   if (portrait) {
     const fm = Math.min(1, ch / 700, cw / 390);
     NODES.forEach(n => { n.w = n.h = Math.round(n.mbase * fm); n.cx = Math.max(n.w * 0.3, Math.min(cw - n.w * 0.3, n.mfx * cw)); n.cy = n.mfy * ch; n.driftK = 0.55 * fm; });
