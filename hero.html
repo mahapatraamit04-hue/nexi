@@ -19,7 +19,7 @@
 <body>
 <div id="host">
   <div id="root" style="width:1900px;height:960px;">
-    <svg id="wires" width="1900" height="960" style="position:absolute;top:0;left:0;pointer-events:none;"></svg>
+    <svg id="wires" width="1900" height="960" style="position:absolute;top:0;left:0;pointer-events:none;overflow:visible;"></svg>
   </div>
 </div>
 
@@ -111,6 +111,9 @@ let hovered = null, dragActive = false, scale = 1, curPortrait = null;
 
 const PORTRAIT_MAX_WIDTH = 768;
 
+// Drag is unbounded — tiles can go anywhere; wires follow because the SVG no longer clips.
+function clampNode(n, dx, dy) { return { x: dx, y: dy }; }
+
 // Stage = the host viewport (same placement logic as hero-responsive): tile x/y are fractions of
 // width/height, tile size scales with width. Portrait uses the mobile arrangement (mfx/mfy, mbase).
 function applyScale() {
@@ -146,6 +149,11 @@ function applyScale() {
     n.lblEl.style.letterSpacing = (tiny ? 0 : k).toFixed(2) + 'px';
     n.lblEl.style.top = n.lblEl.style.left = n.lblEl.style.right = pad.toFixed(1) + 'px';
   });
+  // re-clamp anything parked off-stage after a resize / rotate / zoom change
+  NODES.forEach(n => {
+    n.residual = clampNode(n, n.residual.x, n.residual.y);
+    n.dragOff  = clampNode(n, n.dragOff.x,  n.dragOff.y);
+  });
 }
 applyScale();
 // Intro: tiles pop in (scale 0 → 1, pushed outward from centre, back-out), staggered centre-out; lines fade in over the tail.
@@ -178,16 +186,20 @@ NODES.forEach(n => {
   el.style.cursor = 'grab'; el.style.touchAction = 'none';
   el.addEventListener('mouseenter', () => { if (!dragActive && SHOW_HOVER) hovered = n.id; });
   el.addEventListener('mouseleave', () => { if (hovered === n.id) hovered = null; });
+  // Live scale from the rendered rect: survives any ancestor zoom/transform (canvas at 50%, CSS zoom, etc.)
   const local = (e) => {
     const r = root.getBoundingClientRect();
-    return { x:(e.clientX-r.left)/scale, y:(e.clientY-r.top)/scale };
+    const s = (root.offsetWidth ? r.width / root.offsetWidth : 1) || 1;
+    return { x:(e.clientX-r.left)/s, y:(e.clientY-r.top)/s };
   };
+  // Keep the tile on stage so wires always terminate on a visible box
+  const clampOff = (dx, dy) => clampNode(n, dx, dy);
   let start=null, startOff=null, pointerId=null;
 
   const onMove = (e) => {
     if (!n.dragging) return;
     const p = local(e);
-    n.dragOff = { x: startOff.x + (p.x - start.x), y: startOff.y + (p.y - start.y) };
+    n.dragOff = clampOff(startOff.x + (p.x - start.x), startOff.y + (p.y - start.y));
   };
 
   const onUp = (e) => {
@@ -205,6 +217,7 @@ NODES.forEach(n => {
   };
 
   el.addEventListener('lostpointercapture', () => { if (n.dragging) onUp(); });
+  el.addEventListener('pointercancel', () => { if (n.dragging) onUp(); });
 
   el.addEventListener('pointerdown', (e) => {
     n.dragging = true;
