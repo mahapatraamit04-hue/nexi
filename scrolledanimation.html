@@ -166,13 +166,8 @@ class Component extends DCLogic {
     // computed in px because that padding was a clamp, so the two ends of the
     // interpolation are in different units
     const endX = Math.min(92, Math.max(16, 0.042 * W)), endY = 0.13 * H;
-    // on a portrait viewport the desktop insets make a tall box; start from a landscape
-    // rectangle instead (wide, about 16:10) so the window reads the same on mobile
-    const portrait = H > W;
-    const sx = portrait ? 0.12 * W : 0.31 * W;
-    const sy = portrait ? Math.max(0, (H - (W - 2 * sx) * 0.62) / 2) : 0.27 * H;
-    const vx = sx + (endX - sx) * g;
-    const vy = sy + (endY - sy) * g;
+    const vx = 0.31 * W + (endX - 0.31 * W) * g;
+    const vy = 0.27 * H + (endY - 0.27 * H) * g;
     // ONE inset string drives both the animation window and the white text, so the colour
     // split lands exactly on the box edge instead of approximately, as a blend mode would
     const clip = 'inset(' + vy.toFixed(1) + 'px ' + vx.toFixed(1) + 'px round 28px)';
