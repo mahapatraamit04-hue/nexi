@@ -5,14 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Signals</title>
 <style>
-  * { box-sizing: border-box; }
+  /* Scoped to the section so nothing leaks into a host page when this is pasted as an embed. */
+  .seq-shell, .seq-shell *, .seq-shell *::before, .seq-shell *::after { box-sizing: border-box; }
   html, body { margin: 0; }
+  /* NB: no overflow rule on html/body. `html, body { overflow-x: hidden }` turns <body> into its
+     own scroll container, which is what produced the "section scrolls a bit, then the page
+     scrolls" double-scroll. Horizontal overflow is clipped on the section itself instead. */
   :root {
     --head-active: #f4f4f6;
     --head-idle: rgba(244,244,246,0.42);
     --sub: rgba(244,244,246,0.55);
     --track: rgba(255,255,255,0.12);
     --fill: rgba(255,255,255,0.9);
+    --pad-y: 24px;   /* vertical padding of .seq-inner on desktop; the stage is sized against it */
   }
 
   .seq-shell {
@@ -21,15 +26,15 @@
     background: #0D0C1D;
     font-family: "Switzer", system-ui, -apple-system, sans-serif;
     color: var(--head-active);
-    /* FIX A: replaces `html, body { overflow-x: hidden }`, which made <body> a nested
-       scroll container. clip does not create a scroll container. */
-    overflow-x: clip;
+    overflow-x: clip;   /* clip, not hidden: hidden would make the section a vertical scroller */
   }
+  /* FIX 4: margin auto instead of align-items:center, so overflow stays reachable
+     when the viewport is short / zoomed / large default font. */
   .seq-inner {
     width: 100%; max-width: 1500px;
     margin: auto 0;
     display: flex; align-items: center;
-    padding: 24px 3%;
+    padding: var(--pad-y) 3%;
   }
 
   /* LEFT: content */
@@ -39,10 +44,12 @@
     padding-right: 32px;
   }
   .seq-heading {
-    font-size: 40px; font-weight: 500; line-height: 1.15; letter-spacing: -0.02em;
+    font-size: 40px; font-size: clamp(30px, 3.1vw, 40px);
+    font-weight: 500; line-height: 1.15; letter-spacing: -0.02em;
     margin: 0 0 44px; max-width: 20ch;
   }
   .seq-items { display: flex; flex-direction: column; gap: 26px; }
+  /* FIX 1b: kill the 300ms tap delay and the grey iOS flash */
   .seq-item {
     cursor: pointer;
     touch-action: manipulation;
@@ -51,7 +58,8 @@
   .item-head {
     display: block; width: 100%; text-align: left; background: none; border: none;
     padding: 0; margin: 0; cursor: pointer; font-family: inherit;
-    font-size: 24px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.3;
+    font-size: 24px; font-size: clamp(20px, 1.9vw, 24px);
+    font-weight: 500; letter-spacing: -0.01em; line-height: 1.3;
     color: var(--head-idle); transition: color .25s ease;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
@@ -61,8 +69,9 @@
     max-height: 0; opacity: 0; overflow: hidden;
     transition: max-height .25s ease, opacity .25s ease, margin .25s ease;
   }
+  /* FIX 5: 200px clipped the longest copy in the 861-1100px band */
   .seq-item.is-active .item-body { max-height: 320px; opacity: 1; margin-top: 14px; }
-  .item-sub { margin: 0 0 18px; font-size: 18px; line-height: 1.55; color: var(--sub); }
+  .item-sub { margin: 0 0 18px; font-size: 18px; font-size: clamp(16px, 1.4vw, 18px); line-height: 1.55; color: var(--sub); }
   .item-progress {
     position: relative; height: 2px; width: 100%;
     background: var(--track); border-radius: 2px; overflow: hidden;
@@ -71,45 +80,56 @@
     position: absolute; left: 0; top: 0; height: 100%; width: 0; background: var(--fill);
   }
 
-  .seq-mnav { display: none; }
+  .seq-mnav { display: none; }   /* mobile-only; hidden on desktop */
 
   /* RIGHT: animation */
   .seq-right {
     flex: 1 1 60%;
     display: flex; align-items: center; justify-content: center; min-width: 0;
   }
+  /* max-height is the viewport minus the section padding. It was 94vh, which with the 48px
+     padding made the section 100vh + a few px on common laptop heights (768px -> 770px,
+     720px -> 725px), so the page / iframe always had a small extra scroll. */
   .seq-stage {
-    position: relative; width: 100%; aspect-ratio: 340 / 360;
-    /* FIX B: 94vh + 48px of .seq-inner padding overflowed 100vh on any viewport
-       under 800px tall -> a few px of inner scroll before the page scrolled. */
-    max-height: 94vh;
-    max-height: min(94vh, calc(100vh - 48px));
+    position: relative; width: 100%;
+    max-height: calc(100vh - 2 * var(--pad-y));
+    aspect-ratio: 340 / 360;
     display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-    /* FIX C: vertical drags go straight to the page; horizontal stays free for the swipe handler */
-    touch-action: pan-y;
+    overflow: hidden;   /* 1.4x ctx scale must not create scrollable overflow */
+    /* Vertical page scroll + pinch stay native; horizontal drags are ours (swipe between acts)
+       so the browser never starts a sideways pan / rubber-band from here. */
+    touch-action: pan-y pinch-zoom;
   }
-  @supports not (aspect-ratio: 1 / 1) {
-    .seq-stage { height: 0; padding-top: 105.88%; max-height: none; }
-    .seq-lottie { position: absolute; inset: 0; }
-  }
+  /* FIX 6a: decorative, must never intercept a touch drag */
   .seq-lottie { width: 100%; height: 100%; pointer-events: none; transform-origin: 50% 50%; will-change: transform; }
-  .seq-ghost { position: absolute; inset: 0; opacity: 0; }
+  /* Second Lottie instance, only visible during the Context loop crossfade */
+  .seq-ghost { position: absolute; top: 0; left: 0; opacity: 0; }
+  /* FIX 6b: iOS 14 / older Safari have no aspect-ratio. The ratio box is a pseudo-element so its
+     % padding resolves against the stage's own width (not the column's). */
+  @supports not (aspect-ratio: 1 / 1) {
+    .seq-stage { display: block; }
+    .seq-stage::before { content: ""; display: block; padding-top: 105.88%; }
+    .seq-lottie { position: absolute; top: 0; left: 0; }
+  }
 
-  /* ---- STACKED LAYOUT: phones, plus portrait tablets up to 1100px (FIX D) ---- */
+  /* ---- STACKED (phones, and tablets in portrait): heading, animation, bar row + active text ---- */
   @media (max-width: 860px), (max-width: 1100px) and (orientation: portrait) {
     .seq-shell { min-height: 0; }
     .seq-inner { flex-direction: column; max-width: 540px; padding: 40px 16px 48px; }
-    .seq-left { display: contents; }
+    .seq-left { display: contents; }                 /* promote children so animation can sit between */
     .seq-heading { order: 1; text-align: center; margin: 0 auto 4px; max-width: 20ch; font-size: 32px; }
     .seq-right { order: 2; width: 100%; margin: 0; }
     .seq-stage { width: 100%; max-height: 64vh; }
 
-    .seq-items { display: none; }
+    .seq-items { display: none; }                    /* desktop accordion hidden on mobile */
 
-    .seq-mnav { display: block; order: 3; text-align: center; margin-top: 6px; touch-action: pan-y; }
+    .seq-mnav {
+      display: block; order: 3; width: 100%; text-align: center; margin-top: 6px;
+      touch-action: pan-y pinch-zoom;
+    }
     .mbars { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; }
 
+    /* FIX 1a: 2px was the entire tap target. Visual stays 2px, hit area is now 24px. */
     .mbar {
       flex: 1 1 0; max-width: 110px;
       height: 24px; padding: 0; border: none; background: transparent;
@@ -127,24 +147,27 @@
       position: absolute; left: 0; top: 50%; margin-top: -1px;
       height: 2px; width: 0; background: var(--fill); border-radius: 2px;
     }
+    /* All three texts are stacked in one grid cell, so the block is always as tall as the
+       longest copy. Swapping acts no longer changes the section height, which is what made
+       the page jump / "extra scroll" on phones while the animation advanced. */
+    .mtext { display: grid; }
+    .mtext-item { grid-area: 1 / 1; visibility: hidden; }
+    .mtext-item.is-active { visibility: visible; }
     .mtitle { margin: 0 0 10px; font-size: 20px; font-weight: 500; color: var(--head-active); }
-    /* FIX E: reserve height so swapping segment text doesn't change section height */
-    .msub { margin: 0 auto; font-size: 16px; line-height: 1.55; color: var(--sub); max-width: 40ch; min-height: calc(1.55em * 3); }
+    .msub { margin: 0 auto; font-size: 16px; line-height: 1.55; color: var(--sub); max-width: 40ch; }
   }
 
-  /* Narrow phones: longest copy wraps to 4 lines */
-  @media (max-width: 360px) {
-    .msub { min-height: calc(1.55em * 4); }
-  }
-
-  /* Tablets in stacked layout: use the width (FIX D) */
-  @media (min-width: 600px) and (max-width: 860px), (min-width: 600px) and (max-width: 1100px) and (orientation: portrait) {
-    .seq-inner { max-width: 720px; padding: 56px 24px 64px; }
-    .seq-heading { font-size: 40px; margin-bottom: 8px; }
-    .mbars { gap: 12px; margin-bottom: 28px; }
-    .mbar { max-width: 140px; }
-    .mtitle { font-size: 24px; }
-    .msub { font-size: 18px; max-width: 44ch; min-height: calc(1.55em * 3); }
+  /* ---- TABLET PORTRAIT: use the width instead of a 540px phone column ---- */
+  @media (min-width: 600px) and (max-width: 1100px) and (orientation: portrait) {
+    .seq-inner { max-width: 760px; padding: 48px 32px 56px; }
+    .seq-heading { font-size: 40px; margin-bottom: 12px; }
+    /* Whole section fits one screen: 100vh minus heading, bars, copy and padding (~460px). */
+    .seq-stage { max-height: 64vh; max-height: max(360px, calc(100vh - 460px)); }
+    .seq-mnav { margin-top: 12px; }
+    .mbars { gap: 14px; margin-bottom: 28px; }
+    .mbar { max-width: 150px; }
+    .mtitle { font-size: 24px; margin-bottom: 12px; }
+    .msub { font-size: 18px; max-width: 46ch; }
   }
 </style>
 </head>
@@ -184,8 +207,7 @@
           <button class="mbar" type="button" data-index="1" aria-label="Agents"><span class="mfill"></span></button>
           <button class="mbar" type="button" data-index="2" aria-label="Compounding"><span class="mfill"></span></button>
         </div>
-        <h3 class="mtitle"></h3>
-        <p class="msub"></p>
+        <div class="mtext" aria-live="polite"></div>
       </div>
     </div>
 
@@ -242,11 +264,21 @@
   var items = Array.prototype.slice.call(document.querySelectorAll(".seq-item"));
   var mfills = Array.prototype.slice.call(document.querySelectorAll(".mfill"));
   var mbars  = Array.prototype.slice.call(document.querySelectorAll(".mbar"));
-  var mtitle = document.querySelector(".mtitle");
-  var msub   = document.querySelector(".msub");
+  var mtext  = document.querySelector(".mtext");
   var barFills = items.map(function (el) { return el.querySelector(".bar-fill"); });
   var TEXTS = items.map(function (el) {
     return { t: el.querySelector(".item-head").textContent, s: el.querySelector(".item-sub").textContent };
+  });
+  // Mobile copy: all acts rendered once, stacked in one grid cell (see .mtext CSS), so the block
+  // height is fixed at the longest copy and switching acts never shifts the page.
+  var mtextItems = TEXTS.map(function (x, i) {
+    var wrap = document.createElement("div");
+    wrap.className = "mtext-item" + (i === 0 ? " is-active" : "");
+    var h = document.createElement("h3"); h.className = "mtitle"; h.textContent = x.t;
+    var p = document.createElement("p");  p.className = "msub";   p.textContent = x.s;
+    wrap.appendChild(h); wrap.appendChild(p);
+    if (mtext) mtext.appendChild(wrap);
+    return wrap;
   });
 
   var reduceMotion = window.matchMedia &&
@@ -322,8 +354,7 @@
     return 0;
   }
   function setMobileText(i) {
-    if (mtitle) mtitle.textContent = TEXTS[i].t;
-    if (msub) msub.textContent = TEXTS[i].s;
+    mtextItems.forEach(function (el, idx) { el.classList.toggle("is-active", idx === i); });
   }
   function setBars(hi, pct) {
     for (var i = 0; i < N; i++) {
@@ -450,14 +481,27 @@
   });
 
   (function attachSwipe() {
-    var x0 = 0, y0 = 0, tracking = false;
+    var x0 = 0, y0 = 0, sy0 = 0, tracking = false, axis = null;
+    function scrollY() { return window.pageYOffset || document.documentElement.scrollTop || 0; }
     function onStart(e) {
       if (e.touches.length !== 1) { tracking = false; return; }
-      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; tracking = true;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; sy0 = scrollY(); axis = null; tracking = true;
+    }
+    // Axis lock: the first ~10px of movement decides. A gesture that starts vertical is a page
+    // scroll and can never turn into an act change, however much it drifts sideways later.
+    function onMove(e) {
+      if (!tracking || axis) return;
+      if (e.touches.length !== 1) { tracking = false; return; }
+      var mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+      if (Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+      axis = Math.abs(mx) > Math.abs(my) ? "x" : "y";
+      if (axis === "y") tracking = false;
     }
     function onEnd(e) {
       if (!tracking) return;
       tracking = false;
+      if (axis !== "x") return;
+      if (Math.abs(scrollY() - sy0) > 8) return;   // the page moved: it was a scroll, not a swipe
       var t = e.changedTouches && e.changedTouches[0];
       if (!t) return;
       var dx = t.clientX - x0, dy = t.clientY - y0;
@@ -471,6 +515,7 @@
     [stage, mnav].forEach(function (el) {
       if (!el) return;
       el.addEventListener("touchstart", onStart, { passive: true });
+      el.addEventListener("touchmove", onMove, { passive: true });
       el.addEventListener("touchend", onEnd, { passive: true });
       el.addEventListener("touchcancel", function () { tracking = false; }, { passive: true });
     });
