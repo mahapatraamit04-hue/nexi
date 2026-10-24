@@ -1,0 +1,881 @@
+<!--
+  Nexigence Legal Center: content and styles.
+  This is the only file you need to edit to change policy text.
+  Each policy = one <button data-tab="..."> in the sidebar + one <section data-panel="..."> in main.
+  The data-tab and data-panel values must match.
+  Gray bracketed text (class nxl-ph) = details to confirm before going live.
+-->
+<style>
+  .nxl,
+  .nxl * {
+    font-family: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  }
+  .nxl { color: #5c5c5c; -webkit-font-smoothing: antialiased; }
+  .nxl *, .nxl *::before, .nxl *::after { box-sizing: border-box; }
+
+  .nxl-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 120px;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+    align-items: start;
+  }
+
+  /* Sidebar */
+  .nxl-side { position: sticky; top: 40px; }
+  .nxl-eyebrow {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8a8a8a;
+    margin: 0 0 32px;
+  }
+  .nxl-nav {
+    display: flex;
+    flex-direction: column;
+    border-left: 2px solid #e6e6e6;
+  }
+  .nxl-tab {
+    display: block;
+    width: 100%;
+    margin: 0 0 0 -2px;
+    padding: 12px 0 12px 22px;
+    background: none;
+    border: 0;
+    border-left: 2px solid transparent;
+    border-radius: 0;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: #8f8f8f;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .nxl-tab:hover { color: #111111; }
+  .nxl-tab:focus-visible { outline: 2px solid #000000; outline-offset: 2px; }
+  .nxl-tab.is-active { color: #000000; border-left-color: #000000; }
+
+  /* Panels */
+  .nxl-panel { display: none; }
+  .nxl-panel.is-active { display: block; }
+
+  .nxl-title {
+    font-size: clamp(40px, 5.5vw, 76px);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #000000;
+    margin: 0;
+  }
+  .nxl-rule { border: 0; border-top: 1px solid #e6e6e6; margin: 48px 0 56px; }
+  .nxl-updated { font-style: italic; font-size: 17px; color: #444444; margin: 0 0 32px; }
+
+  .nxl-body p, .nxl-body li {
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.85;
+    margin: 0 0 20px;
+  }
+  .nxl-body h3 {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: #000000;
+    margin: 56px 0 14px;
+  }
+  .nxl-body h4 {
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #111111;
+    margin: 32px 0 10px;
+  }
+  .nxl-body ul, .nxl-body ol { padding-left: 24px; margin: 0 0 20px; }
+  .nxl-body li { margin-bottom: 8px; }
+  .nxl-body li ul { margin-top: 8px; }
+  .nxl-body strong { font-weight: 500; color: #111111; }
+  .nxl-body a { color: #000000; text-decoration: underline; text-underline-offset: 3px; }
+  .nxl-body .nxl-ph { color: #9a9a9a; }
+
+  /* Tables */
+  .nxl-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 8px 0 32px; }
+  .nxl-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 16px;
+    line-height: 1.45;
+    color: #0f2a24;
+    border: 1px solid #d6dbd9;
+  }
+  .nxl-table th, .nxl-table td {
+    border: 1px solid #d6dbd9;
+    padding: 18px 20px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 16px;
+  }
+  .nxl-table thead th { background: #f1f3f2; font-weight: 500; }
+  .nxl-table tbody td { background: #ffffff; font-weight: 400; }
+  .nxl-table .nxl-stack { display: block; }
+  .nxl-table .nxl-stack + .nxl-stack { margin-top: 16px; }
+
+  @media (max-width: 991px) {
+    .nxl-layout { grid-template-columns: 1fr; gap: 48px; padding: 32px 16px 80px; }
+    .nxl-side { position: static; }
+    .nxl-rule { margin: 32px 0 40px; }
+  }
+  @media (max-width: 767px) {
+    .nxl-table th, .nxl-table td { padding: 12px 14px; }
+  }
+</style>
+
+<div class="nxl" id="nxl-legal">
+  <div class="nxl-layout">
+
+    <aside class="nxl-side">
+      <p class="nxl-eyebrow">Legal</p>
+      <div class="nxl-nav" role="tablist" aria-label="Legal documents">
+        <button class="nxl-tab is-active" role="tab" data-tab="acceptable-use-policy">Nexigence Acceptable Use Policy</button>
+        <button class="nxl-tab" role="tab" data-tab="cookie-policy">Nexigence Cookie Policy</button>
+        <button class="nxl-tab" role="tab" data-tab="end-user-terms">Nexigence End User Terms of Use</button>
+        <button class="nxl-tab" role="tab" data-tab="candidate-privacy-policy">Personnel, Applicant, and Candidate Privacy Policy</button>
+        <button class="nxl-tab" role="tab" data-tab="main-services-agreement">Nexigence Main Services Agreement</button>
+        <button class="nxl-tab" role="tab" data-tab="privacy-policy">Nexigence Privacy Policy</button>
+        <button class="nxl-tab" role="tab" data-tab="product-terms">Nexigence Product Terms</button>
+        <button class="nxl-tab" role="tab" data-tab="subprocessors">Nexigence Subprocessors</button>
+        <button class="nxl-tab" role="tab" data-tab="website-terms">Nexigence Website Terms and Conditions</button>
+      </div>
+    </aside>
+
+    <main class="nxl-main">
+
+<!-- =====================================================================
+     ACCEPTABLE USE POLICY
+     ===================================================================== -->
+      <section class="nxl-panel is-active" role="tabpanel" data-panel="acceptable-use-policy">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Nexigence Acceptable Use Policy</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>This Acceptable Use Policy (“<strong>Use Policy</strong>”) applies to every use of the Services. Capitalized terms not defined here have the meaning given in the agreement between Customer and Nexigence. Nexigence may update this Use Policy from time to time. Where an update would materially affect how Customer uses the Services, we will notify Customer before it takes effect, unless the change is required for legal or regulatory reasons, in which case it may take effect immediately. All other updates take effect on the date they are posted on this page.</p>
+
+          <p>Customer agrees not to use the Services, and not to allow any End User or third party to use the Services, in any of the ways described below.</p>
+
+          <h3>1. Interfering with the Services.</h3>
+          <p>Using the Services to disrupt, damage, or compromise them or the systems they run on, including:</p>
+          <ul>
+            <li>bypassing, disabling, or circumventing any security, authentication, or access control measure;</li>
+            <li>any denial-of-service attack, or any other activity intended to overload or degrade the Services, such as sending requests at a rate beyond documented limits;</li>
+            <li>uploading or distributing malware, viruses, worms, Trojan horses, corrupted files, or other harmful code;</li>
+            <li>using bots, scrapers, crawlers, or other automated tools to access the Services, except through APIs and methods Nexigence documents for that purpose;</li>
+            <li>scanning, probing, or testing the Services for vulnerabilities without Nexigence’s prior written permission;</li>
+            <li>accessing, or attempting to access, another customer’s account, data, or environment.</li>
+          </ul>
+
+          <h3>2. Unlawful or harmful activity.</h3>
+          <p>Using the Services to break the law or harm others, including:</p>
+          <ul>
+            <li>violating any applicable law or regulation, including privacy, consumer protection, telemarketing, export control, sanctions, and anti-corruption laws;</li>
+            <li>infringing or misappropriating anyone’s intellectual property, privacy, or publicity rights;</li>
+            <li>fraud, phishing, scams, or impersonating any person or organization;</li>
+            <li>harassing, threatening, defaming, or intimidating any person, or promoting hatred or violence against any group;</li>
+            <li>creating or distributing any content that sexually exploits or endangers children.</li>
+          </ul>
+
+          <h3>3. Misuse of AI capabilities.</h3>
+          <p>Using the AI features of the Services in ways that create unacceptable risk, including:</p>
+          <ul>
+            <li>generating or distributing deceptive content, such as synthetic voices, images, or video of real people, without their consent and any disclosure required by law;</li>
+            <li>presenting an AI agent as a human where the law requires disclosure, or where the person interacting would reasonably expect to know;</li>
+            <li>making decisions that have legal or similarly significant effects on individuals, such as decisions about employment, credit, housing, insurance, education, or healthcare, based solely on Output without appropriate human review;</li>
+            <li>placing automated or AI-voiced calls or messages without the consents and disclosures required by applicable telemarketing and recording laws;</li>
+            <li>developing weapons, or carrying out surveillance or profiling that targets specific individuals without a lawful basis;</li>
+            <li>attempting to extract model weights, system prompts, or underlying instructions, or using prompt injection or similar techniques to defeat safety controls;</li>
+            <li>using Output to train or develop models or services that compete with the Services.</li>
+          </ul>
+
+          <h3>4. Restricted data.</h3>
+          <p>Submitting the following to the Services, unless Nexigence has expressly agreed to it in writing:</p>
+          <ul>
+            <li>data that Customer does not have the right to share or process;</li>
+            <li>payment card data, bank account numbers, or government-issued identification numbers;</li>
+            <li>protected health information subject to HIPAA or similar health privacy laws;</li>
+            <li>special categories of personal data, such as data revealing racial or ethnic origin, religious beliefs, health, or sexual orientation.</li>
+          </ul>
+
+          <h3>5. Enforcement.</h3>
+          <p>If we reasonably believe this Use Policy has been violated, Nexigence may remove or disable the relevant content, suspend or limit access to the Services, terminate the account, and cooperate with law enforcement or affected parties, in each case as permitted by the agreement between Customer and Nexigence. Where practical, we will contact Customer first so the issue can be resolved.</p>
+
+          <h3>6. Reporting.</h3>
+          <p>To report a suspected violation of this Use Policy, email <span class="nxl-ph">[abuse or legal email address]</span>.</p>
+        </div>
+      </section>
+
+<!-- =====================================================================
+     COOKIE POLICY
+     ===================================================================== -->
+      <section class="nxl-panel" role="tabpanel" data-panel="cookie-policy">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Nexigence Cookie Policy</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>This Cookie Policy explains how Nexigence AI Inc. and its affiliates (“<strong>Nexigence</strong>,” “<strong>we</strong>,” or “<strong>us</strong>”) use cookies and similar technologies on our website and in the Services. It should be read together with our <a href="#privacy-policy">Privacy Policy</a>.</p>
+
+          <h3>1. What cookies are.</h3>
+          <p>Cookies are small text files that a website stores on your device when you visit it. They let the site remember your actions and preferences, keep you signed in, and help the site owner understand how the site is used. Cookies set by the site you are visiting are “first-party” cookies. Cookies set by another company, such as an analytics provider, are “third-party” cookies.</p>
+
+          <h3>2. Similar technologies.</h3>
+          <p>We may also use pixels, tags, local storage, and software development kits. They work in similar ways to cookies, and this policy covers them too.</p>
+
+          <h3>3. Cookies we use.</h3>
+          <div class="nxl-table-wrap">
+            <table class="nxl-table">
+              <thead>
+                <tr>
+                  <th scope="col">Category</th>
+                  <th scope="col">What it does</th>
+                  <th scope="col">Examples</th>
+                  <th scope="col">Can you turn it off?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Strictly necessary</td>
+                  <td>Makes the site and Services work, including security, load balancing, sign-in, and remembering your cookie choices</td>
+                  <td><span class="nxl-ph">[Hosting, authentication, and consent tool cookies]</span></td>
+                  <td>No, the site cannot work without them</td>
+                </tr>
+                <tr>
+                  <td>Functional</td>
+                  <td>Remembers preferences such as language or region, and supports features like embedded forms or chat</td>
+                  <td><span class="nxl-ph">[Form, chat, or scheduling tool cookies]</span></td>
+                  <td>Yes</td>
+                </tr>
+                <tr>
+                  <td>Analytics</td>
+                  <td>Helps us understand how visitors use the site, which pages are popular, and where errors happen</td>
+                  <td><span class="nxl-ph">[Analytics tool cookies]</span></td>
+                  <td>Yes</td>
+                </tr>
+                <tr>
+                  <td>Marketing</td>
+                  <td>Measures the performance of our campaigns and shows relevant Nexigence content on other sites</td>
+                  <td><span class="nxl-ph">[Advertising and CRM tool cookies]</span></td>
+                  <td>Yes</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>4. Your choices.</h3>
+          <p>When you first visit our website, you can accept or reject non-essential cookies through our cookie banner, and you can change your choice at any time through the cookie settings link in the site footer. You can also block or delete cookies in your browser settings, though some parts of the site may stop working properly. Where required by law, we treat a Global Privacy Control signal from your browser as a request to opt out of cookies used for targeted advertising.</p>
+
+          <h3>5. How long cookies last.</h3>
+          <p>Session cookies are deleted when you close your browser. Persistent cookies stay on your device until they expire or you delete them. The length depends on the purpose of each cookie, and we set expiry periods no longer than reasonably needed.</p>
+
+          <h3>6. Changes to this policy.</h3>
+          <p>We may update this Cookie Policy when we change the technologies we use or when the law changes. The date at the top of this page shows when it was last updated.</p>
+
+          <h3>7. Contact us.</h3>
+          <p>If you have questions about our use of cookies, email <span class="nxl-ph">[privacy email address]</span>.</p>
+        </div>
+      </section>
+
+<!-- =====================================================================
+     END USER TERMS OF USE
+     ===================================================================== -->
+      <section class="nxl-panel" role="tabpanel" data-panel="end-user-terms">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Nexigence End User Terms of Use</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>These End User Terms of Use (“<strong>End User Terms</strong>”) form an agreement between Nexigence AI Inc., a Connecticut corporation, together with its affiliates, including Nexigence AI Pvt. Ltd. (“<strong>Nexigence</strong>,” “<strong>we</strong>,” “<strong>us</strong>,” or “<strong>our</strong>”), and the individual who creates an account for, or otherwise uses, the Services (“<strong>User</strong>,” “<strong>you</strong>,” or “<strong>your</strong>”). By clicking “Accept” or a similar button when creating your account, or by accessing or using the Services in any way, you agree to be bound by these End User Terms, the <a href="#privacy-policy">Nexigence Privacy Policy</a>, and the <a href="#acceptable-use-policy">Nexigence Acceptable Use Policy</a>, and you agree to comply with all laws and regulations that apply to your use of the Services. If you do not agree, do not use the Services.</p>
+
+          <h3>1. Customer’s Account.</h3>
+          <p>Most Users access the Services through an organization, such as an employer or a client of Nexigence (“<strong>Customer</strong>”), that has entered into a services agreement with Nexigence, including the <a href="#main-services-agreement">Nexigence Main Services Agreement</a> or another written agreement (the “<strong>Customer Agreement</strong>”). If your account uses an email address issued by a Customer, or was created at a Customer’s direction, you are an authorized End User of that Customer and must use the Services in line with that Customer’s own terms and policies as well as these End User Terms. The Customer Agreement sets out what Nexigence provides to the Customer and the Customer’s obligations. Any data, documents, files, prompts, recordings, or other materials you submit to the Services on behalf of a Customer (“<strong>Customer Materials</strong>”) belong to that Customer. Capitalized terms not defined in these End User Terms have the meaning given in the Customer Agreement.</p>
+
+          <h3>2. Relationship between Nexigence, Customer, and User.</h3>
+          <p>As between Nexigence and the Customer, you agree that the Customer, and not Nexigence, is solely responsible for: (a) informing you of any obligations or restrictions that apply to your use of the Services; (b) obtaining any rights, permissions, or consents from you that are needed for the lawful use of Customer Materials and operation of the Services; (c) ensuring that the transfer and processing of Customer Materials under the Customer Agreement is lawful; and (d) responding to and resolving any dispute between you and the Customer relating to the Services, Customer Materials, or the Customer’s failure to meet these responsibilities.</p>
+
+          <h3>3. User Account and Registration.</h3>
+          <p>You may need an account to use some or all features of the Services. When you register, you may be asked for personal information such as your name, work email address, and job title, as described in our <a href="#privacy-policy">Privacy Policy</a>. You agree that the information you provide is accurate and that you will keep it up to date. You are responsible for keeping your login credentials confidential and for all activity that takes place under your account. Your account is subject to the Customer’s control: the Customer’s administrator may be able to access, disclose, restrict, or remove information in your account, and may restrict or end your access. If you believe your account has been compromised, notify us immediately at <span class="nxl-ph">[support email address]</span>.</p>
+
+          <h3>4. Use of the Services.</h3>
+          <p>Provided you comply fully and continuously with these End User Terms, Nexigence permits you to access and use the Services during the Term, through the interfaces we support, solely for the purposes the Customer has authorized. This permission is personal to you and does not give you any right to transfer, sublicense, or assign your access to anyone else.</p>
+
+          <h3>5. Reservation of Rights.</h3>
+          <p>All rights not expressly granted to you or the Customer are reserved by Nexigence and its licensors. As between you, the Customer, and Nexigence, Nexigence owns all right, title, and interest in the Nexigence Technology, including all Intellectual Property Rights in it. The software, models, agent configurations, workflows, interfaces, designs, documentation, and other elements of the Nexigence Technology are protected by intellectual property and other laws.</p>
+
+          <h3>6. Restrictions.</h3>
+          <p>You will not, and will not help anyone else to: (a) let any unauthorized person use the Services, or use them for any purpose other than one the Customer has authorized; (b) copy, modify, or create derivative works of the Services; (c) reverse engineer, decompile, or disassemble the Services, except to the extent the law expressly allows despite this restriction; (d) access or use the Services to build a competing product or service, or to copy any features, functions, or designs of the Services; (e) remove or obscure any proprietary notices; or (f) use the Services in breach of the Acceptable Use Policy.</p>
+
+          <h3>7. Feedback.</h3>
+          <p>You may share ideas, suggestions, or other feedback about the Services or about new products and services (“<strong>Feedback</strong>”). Nexigence may use, modify, incorporate, license, and distribute Feedback for any purpose, without any obligation or payment to you. Please do not submit Feedback that is confidential or that belongs to someone else.</p>
+
+          <h3>8. Confidential Information.</h3>
+          <p>Through the Services, you may receive non-public business or technical information about Nexigence, including information about the Nexigence Technology, pricing, and product plans (“<strong>Confidential Information</strong>”). You will take reasonable care to use Confidential Information only for the purposes allowed under these End User Terms, and not to disclose it to anyone other than the Customer, unless Nexigence agrees otherwise. Confidential Information does not include information that: (i) is or becomes public through no fault of yours; (ii) you already knew before receiving it, without breaching any duty of confidentiality; (iii) you lawfully receive from a third party who is not under a duty of confidentiality; or (iv) you develop independently without using the Confidential Information or the Services.</p>
+
+          <h3>9. Third-Party Offerings.</h3>
+          <p>The Services may connect to, or provide access to, third-party products, services, AI models, or content (“<strong>Third-Party Offerings</strong>”). Nexigence does not endorse or make any promises about Third-Party Offerings, and their use is at the Customer’s and your own risk. Third-Party Offerings may be subject to their own terms or restrictions, which will be described in the Documentation where required, and you agree to follow them.</p>
+
+          <h3>10. AI-Generated Output.</h3>
+          <p>The Services use artificial intelligence to generate text, summaries, answers, actions, audio, and other results (“<strong>Output</strong>”). AI systems can produce Output that is inaccurate, incomplete, or inappropriate, and Output may not be unique. You are responsible for reviewing Output before relying on it, and you should not use Output as the sole basis for decisions that have legal, financial, medical, or similarly significant effects on any person without appropriate human review.</p>
+
+          <h3>11. Monitoring Content.</h3>
+          <p>Nexigence is not obliged to monitor Customer Materials, Third-Party Offerings, or how users use the Services. However, we may review activity on the Services, including logs and usage data, to operate, secure, and improve them and to check compliance with these End User Terms and the Acceptable Use Policy. If we do so, we do not take on responsibility for the content, and any information we review will be handled in line with our <a href="#privacy-policy">Privacy Policy</a> and the Customer Agreement.</p>
+
+          <h3>12. User Content.</h3>
+          <p>You may be able to submit comments, questions, support requests, and other content through the Services (“<strong>User Content</strong>”). You confirm that: (a) you have all the rights and permissions needed to submit your User Content; and (b) neither your User Content, nor Nexigence’s use of it as permitted under these End User Terms, will infringe anyone’s intellectual property, privacy, or publicity rights, or break any law.</p>
+
+          <h3>13. Term and Termination.</h3>
+          <p>These End User Terms start when you accept them or first use the Services, and end when the Customer’s subscription covering you ends or your access is terminated as described here (the “<strong>Term</strong>”). If you breach these End User Terms or the Acceptable Use Policy, your right to use the Services ends automatically. Nexigence or the Customer may also suspend or end your access at any time, with or without notice. You may close your account at any time by contacting the Customer or emailing <span class="nxl-ph">[support email address]</span>. When these End User Terms end, your right to use the Services stops immediately. Sections 5 to 8, 10, 12, and 14 to 18 continue to apply after termination.</p>
+
+          <h3>14. Disclaimer.</h3>
+          <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, NEXIGENCE AND ITS AFFILIATES, LICENSORS, AND SUPPLIERS PROVIDE THE SERVICES AND ALL OUTPUT “AS IS” AND “AS AVAILABLE,” AND MAKE NO WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. NEXIGENCE DOES NOT WARRANT THAT THE SERVICES OR OUTPUT WILL BE ACCURATE, COMPLETE, ERROR-FREE, OR UNINTERRUPTED.</p>
+
+          <h3>15. Indemnification.</h3>
+          <p>You will defend, indemnify, and hold harmless Nexigence from and against any third-party claim, and all related damages, liabilities, costs, and expenses (including reasonable legal fees), arising from your use of the Services or from anyone else’s use of your account.</p>
+
+          <h3>16. Limitation of Liability.</h3>
+          <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, NEITHER YOU NOR NEXIGENCE WILL BE LIABLE TO THE OTHER FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING LOSS OF DATA, PROFITS, OR BUSINESS, ARISING FROM THE USE OF OR INABILITY TO USE THE SERVICES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. NEXIGENCE’S TOTAL LIABILITY TO YOU FOR ALL CLAIMS RELATING TO THE SERVICES OR THESE END USER TERMS, WHETHER IN CONTRACT, TORT, OR OTHERWISE, WILL NOT EXCEED <span class="nxl-ph">[US$100]</span>. SOME JURISDICTIONS DO NOT ALLOW THESE LIMITATIONS, SO THEY MAY NOT APPLY TO YOU.</p>
+          <p>These limitations and disclaimers allocate risk between you and Nexigence, form an essential part of these End User Terms, and apply even if a limited remedy fails of its essential purpose.</p>
+
+          <h3>17. Miscellaneous.</h3>
+          <p><strong>17.1 Changes to These End User Terms.</strong> Nexigence may update these End User Terms from time to time. If we make material changes, we will notify you before they take effect, unless the change is required for legal or regulatory reasons. By continuing to use the Services after changes take effect, you agree to the updated terms.</p>
+          <p><strong>17.2 Governing Law.</strong> These End User Terms are governed by the laws of <span class="nxl-ph">[the State of Connecticut]</span>, without regard to its conflict-of-laws rules or the United Nations Convention on Contracts for the International Sale of Goods. The courts named in the Customer Agreement have exclusive jurisdiction over any dispute arising from these End User Terms, and each party consents to that jurisdiction.</p>
+          <p><strong>17.3 Entire Agreement.</strong> These End User Terms, including the policies they refer to, are the entire agreement between you and Nexigence on their subject and replace any earlier agreements or understandings on it. If these End User Terms conflict with the Customer Agreement, the Customer Agreement prevails, followed by these End User Terms, then the referenced policies.</p>
+          <p><strong>17.4 Contact Information.</strong> The Services are provided by Nexigence AI Inc., Middlebury, Connecticut, United States. You can contact us at <span class="nxl-ph">[support email address]</span>.</p>
+          <p><strong>17.5 Assignment.</strong> You may not transfer or assign these End User Terms or any rights under them without our prior written consent. Nexigence may assign them without restriction. Any attempted assignment in breach of this section is void.</p>
+          <p><strong>17.6 Waiver.</strong> A failure or delay in enforcing any right under these End User Terms is not a waiver of that right, and waiving one breach is not a waiver of any later breach.</p>
+          <p><strong>17.7 Severability.</strong> If a court finds any part of these End User Terms unenforceable, that part will be modified to the minimum extent needed to make it enforceable, and the rest will remain in effect.</p>
+          <p><strong>17.8 Interpretation.</strong> In these End User Terms, “including” means “including without limitation,” and “or” is not exclusive.</p>
+
+          <h3>18. Definitions.</h3>
+          <p>18.1 “<strong>Documentation</strong>” means the user guides, help materials, and policies Nexigence makes available for the Services.</p>
+          <p>18.2 “<strong>Intellectual Property Rights</strong>” means all current and future rights worldwide under patent, copyright, trade secret, trademark, and similar laws.</p>
+          <p>18.3 “<strong>Nexigence Technology</strong>” means the Services, Documentation, Usage Data, and all software, models, agent configurations, workflows, know-how, and other technology Nexigence uses to provide them, together with Nexigence’s names, logos, and brand features.</p>
+          <p>18.4 “<strong>Services</strong>” means the Nexigence products and services the Customer has ordered or that Nexigence otherwise makes available to you, including those described in the <a href="#product-terms">Product Terms</a>. Services do not include Output or Third-Party Offerings.</p>
+          <p>18.5 “<strong>Usage Data</strong>” means statistics, metrics, and aggregated or de-identified data about how the Services are used, which do not identify the Customer or any individual.</p>
+        </div>
+      </section>
+
+<!-- =====================================================================
+     PERSONNEL, APPLICANT, AND CANDIDATE PRIVACY POLICY
+     ===================================================================== -->
+      <section class="nxl-panel" role="tabpanel" data-panel="candidate-privacy-policy">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Personnel, Applicant, and Candidate Privacy Policy</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>This policy explains how Nexigence AI Inc. and Nexigence AI Pvt. Ltd. (together, “<strong>Nexigence</strong>,” “<strong>we</strong>,” or “<strong>us</strong>”) collect and use personal data about job applicants and candidates, and about our current and former employees, interns, and contractors (“<strong>Personnel</strong>”). The Nexigence entity that is recruiting for or engaging you is responsible for your personal data. For roles in the United States this is Nexigence AI Inc., and for roles in India this is Nexigence AI Pvt. Ltd.</p>
+
+          <h3>1. Information we collect.</h3>
+          <p>We collect personal data in the following ways:</p>
+          <ul>
+            <li><strong>From you</strong>, when you apply, attend interviews, complete assessments, or join us, such as your CV, contact details, work history, and right-to-work documents.</li>
+            <li><strong>From others</strong>, such as recruiters, referees you name, and, where permitted by law and with notice to you, background check providers.</li>
+            <li><strong>From public sources</strong>, such as professional networking profiles and company websites.</li>
+            <li><strong>During your work with us</strong>, if you join Nexigence, such as payroll, benefits, performance, and system access information.</li>
+          </ul>
+
+          <h3>2. How we use your information.</h3>
+          <p>The table below sets out how we use applicant and candidate data and the legal basis we rely on.</p>
+          <div class="nxl-table-wrap">
+            <table class="nxl-table">
+              <thead>
+                <tr>
+                  <th scope="col">Processing activity</th>
+                  <th scope="col">Category of personal data</th>
+                  <th scope="col">Specific personal data</th>
+                  <th scope="col">Lawful basis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Retaining personal data of active job candidates in our ATS to assess their suitability for employment</td>
+                  <td>Personal identification data, contact data and professional data</td>
+                  <td>First name, date of birth, address, telephone number, email address, CV, cover letter, resume photos, references, letters of recommendation (where applicable), nationality, work permit, and any other personal data that you deliberately share with us in the context of your job interviews or assessments</td>
+                  <td>Performance of a contract</td>
+                </tr>
+                <tr>
+                  <td>Retaining personal data of rejected job candidates in our ATS for future job opportunities</td>
+                  <td>Personal identification data, contact data and professional data</td>
+                  <td>First name, date of birth, address, telephone number, email address, CV, cover letter, resume photos, references, letters of recommendation (where applicable), nationality, work permit, and any other personal data that you deliberately share with us in the context of your job interviews or assessments</td>
+                  <td>Consent</td>
+                </tr>
+                <tr>
+                  <td>Retaining personal data of rejected job candidates in our ATS to identify and efficiently handle duplicate job applications</td>
+                  <td>Personal identification data and contact data</td>
+                  <td>First name, date of birth, address, telephone number, email address</td>
+                  <td>Legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Enrichment of candidate database from public sources (such as LinkedIn, company websites, etc.)</td>
+                  <td>Professional data</td>
+                  <td>First name, date of birth, professional telephone number, professional email address, job title, company name</td>
+                  <td>Legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Dispute resolution</td>
+                  <td>Identification data, application data, communication data</td>
+                  <td>First name, date of birth, address, telephone number, email address, CV, cover letter, interview notes, correspondence related to the application process</td>
+                  <td>Legitimate interest</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>For Personnel, we also use personal data to manage the working relationship, including payroll, benefits, tax and statutory reporting, performance and training, workplace security, IT access, and compliance with employment law. We rely on the performance of your contract, our legal obligations, and our legitimate interests for this processing.</p>
+
+          <h3>3. Special categories of personal data.</h3>
+          <p>Collecting special categories of personal data from job candidates is rare and not something we actively inquire about. However, candidates may occasionally choose to include racial or ethnic origin when describing diversity-related experience, religious or philosophical beliefs in relation to education or volunteer work, or health information if requesting accommodations. Any such information is processed only if the candidate considers it relevant to share, and always in line with data protection laws.</p>
+
+          <h3>4. Who we share your information with.</h3>
+          <p>We share personal data only as needed, with:</p>
+          <ul>
+            <li>the hiring managers and team members involved in your application or work;</li>
+            <li>our affiliated company in the United States or India;</li>
+            <li>service providers acting on our behalf, such as our applicant tracking system, background check, payroll, and benefits providers;</li>
+            <li>professional advisers, regulators, courts, and authorities where required by law or to protect our legal rights.</li>
+          </ul>
+          <p>We do not sell applicant or Personnel data.</p>
+
+          <h3>5. International transfers.</h3>
+          <p>Nexigence operates in the United States and India, so your personal data may be transferred between those countries. Where the law requires it, we use appropriate safeguards for these transfers, such as contractual commitments between our entities and with our service providers.</p>
+
+          <h3>6. How long we keep your information.</h3>
+          <p>We keep active candidate data for the duration of the recruitment process. If you are not hired and have given consent, we keep your data for <span class="nxl-ph">[12 months]</span> to consider you for future roles, after which it is deleted unless you renew your consent. We keep limited identification data longer where needed to manage duplicate applications or legal claims. Personnel data is kept for the period of your engagement and afterwards for as long as required by employment, tax, and other laws.</p>
+
+          <h3>7. Your rights.</h3>
+          <p>Depending on where you live, you may have the right to access, correct, delete, or receive a copy of your personal data, to object to or restrict certain processing, and to withdraw consent at any time where we rely on consent. You may also have the right to complain to a data protection authority. Residents of California have rights under the California Consumer Privacy Act, and individuals in India have rights under the Digital Personal Data Protection Act, 2023. To exercise your rights, contact us using the details below. We will not discriminate against you for exercising them.</p>
+
+          <h3>8. Security.</h3>
+          <p>We use technical and organizational measures designed to protect personal data against unauthorized access, loss, or misuse, including access controls and encryption where appropriate.</p>
+
+          <h3>9. Contact us.</h3>
+          <p>For questions about this policy or to exercise your rights, email <span class="nxl-ph">[privacy or HR email address]</span>.</p>
+        </div>
+      </section>
+
+<!-- =====================================================================
+     MAIN SERVICES AGREEMENT
+     ===================================================================== -->
+      <section class="nxl-panel" role="tabpanel" data-panel="main-services-agreement">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Nexigence Main Services Agreement</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>This Main Services Agreement (“<strong>Agreement</strong>”) is between Nexigence AI Inc. (“<strong>Nexigence</strong>”) and the organization that signs or accepts an Order Form referencing it (“<strong>Customer</strong>”). It governs Customer’s purchase and use of the Services and takes effect on the date the first Order Form is signed (the “<strong>Effective Date</strong>”).</p>
+
+          <h3>1. Definitions.</h3>
+          <p>1.1 “<strong>Affiliate</strong>” means an entity that controls, is controlled by, or is under common control with a party.</p>
+          <p>1.2 “<strong>Customer Materials</strong>” means data, documents, prompts, recordings, and other materials Customer or its Users provide to the Services.</p>
+          <p>1.3 “<strong>Deliverables</strong>” means the workflows, agents, configurations, reports, and other work product Nexigence creates specifically for Customer under a Statement of Work.</p>
+          <p>1.4 “<strong>Order Form</strong>” means an ordering document signed by both parties that describes the Services, fees, and term.</p>
+          <p>1.5 “<strong>Output</strong>” means results generated by the Services from Customer Materials.</p>
+          <p>1.6 “<strong>Services</strong>” means the Nexigence software, platforms, and professional services described in an Order Form or Statement of Work.</p>
+          <p>1.7 “<strong>Statement of Work</strong>” or “<strong>SOW</strong>” means a document describing professional services, Deliverables, timelines, and acceptance criteria.</p>
+          <p>1.8 “<strong>Users</strong>” means Customer’s employees and contractors that Customer authorizes to use the Services.</p>
+
+          <h3>2. Services.</h3>
+          <p><strong>2.1 Provision of Services.</strong> Nexigence will provide the Services described in each Order Form and SOW in line with this Agreement and the <a href="#product-terms">Product Terms</a>.</p>
+          <p><strong>2.2 Professional Services.</strong> Nexigence will perform professional services, such as workflow discovery, solution design, integration, and deployment, in a professional and workmanlike manner. Deliverables will be accepted according to the criteria in the relevant SOW.</p>
+          <p><strong>2.3 Affiliates and Subcontractors.</strong> Nexigence may use its Affiliates, including Nexigence AI Pvt. Ltd., and subcontractors to perform the Services, and remains responsible for their performance.</p>
+
+          <h3>3. Customer Responsibilities.</h3>
+          <p>Customer will: (a) ensure its Users comply with this Agreement, the <a href="#end-user-terms">End User Terms</a>, and the <a href="#acceptable-use-policy">Acceptable Use Policy</a>; (b) be responsible for the accuracy and legality of Customer Materials and for obtaining any consents needed to use them with the Services; (c) provide timely access to the people, systems, and information Nexigence reasonably needs; and (d) keep its account credentials secure.</p>
+
+          <h3>4. Fees and Payment.</h3>
+          <p>Customer will pay the fees in each Order Form. Unless the Order Form says otherwise, Nexigence will invoice fees in advance and Customer will pay within <span class="nxl-ph">[30]</span> days of the invoice date. Fees do not include taxes, which Customer will pay except for taxes on Nexigence’s income. Overdue amounts may incur interest at the lower of <span class="nxl-ph">[1.5%]</span> per month or the maximum rate permitted by law. If Customer disputes an invoice in good faith, the parties will work together to resolve it promptly.</p>
+
+          <h3>5. Customer Materials and Data Protection.</h3>
+          <p><strong>5.1 Ownership.</strong> Customer owns Customer Materials and Output. Customer grants Nexigence a limited right to use Customer Materials only to provide, secure, and support the Services.</p>
+          <p><strong>5.2 No Model Training.</strong> Nexigence will not use Customer Materials or Output to train or improve AI models made available to other customers without Customer’s prior written consent.</p>
+          <p><strong>5.3 Data Processing.</strong> Where Nexigence processes personal data on Customer’s behalf, the parties’ Data Processing Addendum applies. Nexigence’s current subprocessors are listed on the <a href="#subprocessors">Subprocessors</a> page.</p>
+          <p><strong>5.4 Security.</strong> Nexigence will maintain reasonable administrative, technical, and physical safeguards designed to protect Customer Materials, and will notify Customer without undue delay after becoming aware of a security incident affecting them.</p>
+
+          <h3>6. Intellectual Property.</h3>
+          <p><strong>6.1 Nexigence Technology.</strong> Nexigence owns the Services, its pre-existing tools, frameworks, models, and know-how, and any improvements to them (“<strong>Nexigence Technology</strong>”).</p>
+          <p><strong>6.2 Deliverables.</strong> Upon full payment, Customer owns the Deliverables, excluding any Nexigence Technology incorporated in them. Nexigence grants Customer a non-exclusive, perpetual license to use that incorporated Nexigence Technology as part of the Deliverables for Customer’s internal business purposes.</p>
+          <p><strong>6.3 Feedback.</strong> Nexigence may use any feedback Customer provides about the Services without restriction.</p>
+
+          <h3>7. Confidentiality.</h3>
+          <p>Each party will protect the other’s non-public information with at least reasonable care, use it only to perform under this Agreement, and disclose it only to its employees, Affiliates, and advisers who need to know it and are bound by similar obligations. These obligations do not apply to information that is public, already known, independently developed, or lawfully received from a third party. A party may disclose confidential information if required by law, after giving the other party notice where legally allowed.</p>
+
+          <h3>8. Warranties and Disclaimers.</h3>
+          <p>Each party warrants that it has the authority to enter into this Agreement. Nexigence warrants that the Services will perform materially as described in the applicable Order Form or SOW. Customer’s sole remedy for breach of this warranty is for Nexigence to correct the non-conformity or, if it cannot, to refund prepaid fees for the affected Services. EXCEPT AS STATED IN THIS SECTION, THE SERVICES AND OUTPUT ARE PROVIDED “AS IS.” AI-GENERATED OUTPUT MAY BE INACCURATE, AND CUSTOMER IS RESPONSIBLE FOR REVIEWING OUTPUT BEFORE RELYING ON IT.</p>
+
+          <h3>9. Indemnification.</h3>
+          <p>Nexigence will defend Customer against third-party claims alleging that the Services infringe that third party’s intellectual property rights, and pay any resulting damages finally awarded. Customer will defend Nexigence against third-party claims arising from Customer Materials or Customer’s breach of the Acceptable Use Policy, and pay any resulting damages finally awarded. The indemnified party must give prompt notice of the claim, allow the other party to control the defense, and provide reasonable cooperation.</p>
+
+          <h3>10. Limitation of Liability.</h3>
+          <p>EXCEPT FOR BREACH OF CONFIDENTIALITY, INDEMNIFICATION OBLIGATIONS, OR A PARTY’S GROSS NEGLIGENCE OR WILFUL MISCONDUCT, NEITHER PARTY WILL BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR LOST PROFITS OR DATA, AND EACH PARTY’S TOTAL LIABILITY UNDER THIS AGREEMENT WILL NOT EXCEED THE FEES PAID OR PAYABLE BY CUSTOMER IN THE <span class="nxl-ph">[12]</span> MONTHS BEFORE THE EVENT GIVING RISE TO THE CLAIM.</p>
+
+          <h3>11. Term and Termination.</h3>
+          <p>This Agreement continues until all Order Forms and SOWs have ended. Either party may terminate this Agreement or an Order Form if the other party materially breaches it and does not cure the breach within 30 days of written notice. On termination, Customer will pay all fees owed up to the termination date, and Nexigence will return or delete Customer Materials within <span class="nxl-ph">[30]</span> days of Customer’s request, except where retention is required by law.</p>
+
+          <h3>12. General.</h3>
+          <p><strong>12.1 Governing Law.</strong> This Agreement is governed by the laws of <span class="nxl-ph">[the State of Connecticut]</span>, and the courts located in <span class="nxl-ph">[Connecticut]</span> have exclusive jurisdiction over any dispute.</p>
+          <p><strong>12.2 Assignment.</strong> Neither party may assign this Agreement without the other’s consent, except to an Affiliate or in connection with a merger or sale of substantially all of its assets.</p>
+          <p><strong>12.3 Force Majeure.</strong> Neither party is liable for delays caused by events beyond its reasonable control, other than payment obligations.</p>
+          <p><strong>12.4 Notices.</strong> Legal notices must be in writing and sent to the addresses in the Order Form, or for Nexigence to <span class="nxl-ph">[legal email address]</span>.</p>
+          <p><strong>12.5 Independent Contractors.</strong> The parties are independent contractors, and nothing in this Agreement creates a partnership, employment, or agency relationship.</p>
+          <p><strong>12.6 Entire Agreement and Order of Precedence.</strong> This Agreement, together with all Order Forms, SOWs, and the documents they reference, is the entire agreement between the parties on its subject. If there is a conflict, the Order Form prevails, then the SOW, then this Agreement, then the Product Terms.</p>
+        </div>
+      </section>
+
+<!-- =====================================================================
+     PRIVACY POLICY
+     ===================================================================== -->
+      <section class="nxl-panel" role="tabpanel" data-panel="privacy-policy">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Nexigence Privacy Policy</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>This Privacy Policy explains how Nexigence AI Inc. and its affiliate Nexigence AI Pvt. Ltd. (together, “<strong>Nexigence</strong>,” “<strong>we</strong>,” or “<strong>us</strong>”) collect, use, and share personal data when you visit our website, use our Services, attend our events, or otherwise interact with us. Job applicants should read our <a href="#candidate-privacy-policy">Personnel, Applicant, and Candidate Privacy Policy</a>.</p>
+          <p>When we process data on behalf of our Customers inside the Services, we act as a service provider or processor, and the Customer’s own privacy policy governs that data. If you have questions about that data, please contact the relevant Customer.</p>
+
+          <h3>1. Information we collect.</h3>
+          <ul>
+            <li><strong>Information you give us</strong>, such as your name, work email, phone number, company, and job title when you book a demo, create an account, subscribe, register for an event, or contact us.</li>
+            <li><strong>Information collected automatically</strong>, such as IP address, device and browser information, pages visited, and activity in the Services, collected through cookies and similar technologies. See our <a href="#cookie-policy">Cookie Policy</a>.</li>
+            <li><strong>Information from other sources</strong>, such as publicly available professional information, event partners, and business data providers.</li>
+          </ul>
+
+          <h3>2. How we use your information.</h3>
+          <h4>Users of the Services</h4>
+          <div class="nxl-table-wrap">
+            <table class="nxl-table">
+              <thead>
+                <tr>
+                  <th scope="col">Processing activity</th>
+                  <th scope="col">Category of personal data</th>
+                  <th scope="col">Specific personal data</th>
+                  <th scope="col">Lawful basis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Account management and authentication</td>
+                  <td>Personal identification data, contact details</td>
+                  <td>Username, professional email, authentication data</td>
+                  <td>Contract performance</td>
+                </tr>
+                <tr>
+                  <td>Tracking user behavior and product usage</td>
+                  <td>Behavioral data, online identifiers</td>
+                  <td>User activity logs, IP address, device ID, session cookies</td>
+                  <td>Legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Collecting user feedback</td>
+                  <td>Behavioral data, communication data</td>
+                  <td>Feedback data, responses to surveys or feedback forms</td>
+                  <td>Legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Personalization and user experience</td>
+                  <td>Behavioral data, preferences</td>
+                  <td>User activity, language preferences, UI settings</td>
+                  <td>Legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Marketing communications</td>
+                  <td>Contact details, preferences</td>
+                  <td>Professional email address, marketing preferences</td>
+                  <td>Consent or legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Security and fraud prevention</td>
+                  <td>Behavioral data, online identifiers</td>
+                  <td>IP address, login attempts, device data</td>
+                  <td>Legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Dispute resolution</td>
+                  <td>Identification data, activity data, communication data</td>
+                  <td>Name, email address, usage data, transaction history, support inquiries, chat logs</td>
+                  <td>
+                    <span class="nxl-stack">Contract performance</span>
+                    <span class="nxl-stack">Legitimate interest</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h4>Prospects, marketing, and events</h4>
+          <div class="nxl-table-wrap">
+            <table class="nxl-table">
+              <thead>
+                <tr>
+                  <th scope="col">Processing activity</th>
+                  <th scope="col">Category of personal data</th>
+                  <th scope="col">Specific personal data</th>
+                  <th scope="col">Lawful basis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Personalized marketing and sales outreach (e.g. after you book a demo via the Site)</td>
+                  <td>Contact details</td>
+                  <td>Professional email, phone number, name, last name, location, company, job title</td>
+                  <td>Consent or legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Sending marketing communications (e.g. newsletters, blogs, whitepapers, webinars, podcasts, product updates, etc.)</td>
+                  <td>Contact details</td>
+                  <td>Professional email, job title, first name, last name, company</td>
+                  <td>Consent</td>
+                </tr>
+                <tr>
+                  <td>Hosting and managing events and webinars</td>
+                  <td>Personal identification data, communication data</td>
+                  <td>Name, email, interaction data (e.g., polls, questions, phone number, location, job title, company)</td>
+                  <td>Consent</td>
+                </tr>
+                <tr>
+                  <td>Content creation and distribution (i.e. webinars and podcasts)</td>
+                  <td>Physical characteristics, preferences</td>
+                  <td>Names, voice recordings, images, video recordings</td>
+                  <td>Consent</td>
+                </tr>
+                <tr>
+                  <td>CRM analysis, lead scoring, sales intelligence and AI-assisted workflow automation</td>
+                  <td>Identification data, communication data, professional data, behavioral data, preferences</td>
+                  <td>Names, professional email addresses, company, job title, sales and marketing interaction history, call transcripts and summaries, meeting notes, engagement data, publicly available professional information, inferred commercial interests or engagement indicators, communication preferences, lead scoring and prioritisation data</td>
+                  <td>Legitimate interest</td>
+                </tr>
+                <tr>
+                  <td>Lead generation, enrichment and prospect research using publicly available business sources (e.g. LinkedIn, company websites and other public professional sources)</td>
+                  <td>Contact details, professional data, preferences, behavioral data</td>
+                  <td>Name, professional email, phone number, employer information, job title, LinkedIn or other professional profile information, publicly visible business activity, engagement indicators, company information, location, interaction data</td>
+                  <td>Legitimate interest</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>3. How we share your information.</h3>
+          <p>We share personal data with:</p>
+          <ul>
+            <li>service providers and subprocessors that help us run our business and the Services, listed on our <a href="#subprocessors">Subprocessors</a> page;</li>
+            <li>our affiliated company in the United States or India;</li>
+            <li>event co-hosts and partners, where you register for a joint event;</li>
+            <li>a buyer or successor in connection with a merger, acquisition, or sale of assets;</li>
+            <li>authorities, courts, or other parties where required by law or to protect rights, safety, and security;</li>
+            <li>anyone else, with your consent.</li>
+          </ul>
+          <p>We do not sell personal data, and we do not share it for cross-context behavioral advertising without your consent where consent is required.</p>
+
+          <h3>4. International transfers.</h3>
+          <p>We are based in the United States and India, and our service providers may be located elsewhere. Where we transfer personal data across borders, we use safeguards required by applicable law, such as the European Commission’s Standard Contractual Clauses.</p>
+
+          <h3>5. How long we keep your information.</h3>
+          <p>We keep personal data only for as long as needed for the purposes described in this policy, including to meet legal, accounting, and reporting requirements. Marketing data is kept until you unsubscribe or object, and account data is kept for the life of the account and a reasonable period afterwards.</p>
+
+          <h3>6. Your rights.</h3>
+          <p>Depending on where you live, you may have the right to:</p>
+          <ul>
+            <li>access the personal data we hold about you and receive a copy;</li>
+            <li>correct inaccurate data or have your data deleted;</li>
+            <li>object to or restrict certain processing, including direct marketing;</li>
+            <li>withdraw consent at any time where we rely on consent;</li>
+            <li>opt out of the sale or sharing of personal data, or targeted advertising, where these laws apply;</li>
+            <li>complain to a data protection authority.</li>
+          </ul>
+          <p>These rights include those under the EU and UK General Data Protection Regulation, the California Consumer Privacy Act and other US state privacy laws, and India’s Digital Personal Data Protection Act, 2023. To exercise them, contact us using the details below. We may need to verify your identity before acting on a request, and we will not discriminate against you for exercising your rights. You can unsubscribe from marketing emails at any time using the link in each email.</p>
+
+          <h3>7. Security.</h3>
+          <p>We use technical and organizational measures designed to protect personal data, including encryption in transit, access controls, and regular review of our security practices. No method of transmission or storage is completely secure, so we cannot guarantee absolute security.</p>
+
+          <h3>8. Children.</h3>
+          <p>Our website and Services are intended for businesses and are not directed at children. We do not knowingly collect personal data from anyone under 16. If you believe we have, please contact us and we will delete it.</p>
+
+          <h3>9. Changes to this policy.</h3>
+          <p>We may update this Privacy Policy from time to time. If changes are material, we will provide notice through the website or by email before they take effect.</p>
+
+          <h3>10. Contact us.</h3>
+          <p>Nexigence AI Inc., Middlebury, Connecticut, United States<br>Nexigence AI Pvt. Ltd., Hyderabad, Telangana, India<br>Email: <span class="nxl-ph">[privacy email address]</span></p>
+        </div>
+      </section>
+
+<!-- =====================================================================
+     PRODUCT TERMS
+     ===================================================================== -->
+      <section class="nxl-panel" role="tabpanel" data-panel="product-terms">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Nexigence Product Terms</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>These Product Terms add to the <a href="#main-services-agreement">Main Services Agreement</a> or other agreement between Customer and Nexigence (the “<strong>Agreement</strong>”), and apply to the specific Services described below. If these Product Terms conflict with the Agreement on a product-specific matter, these Product Terms prevail for that matter. Capitalized terms not defined here have the meaning given in the Agreement.</p>
+
+          <h3>1. Terms for all Services.</h3>
+          <p><strong>1.1 Output.</strong> Output is generated by AI and may be inaccurate or incomplete. Customer is responsible for configuring appropriate human review for its use case.</p>
+          <p><strong>1.2 Third-Party Models.</strong> Some Services use AI models from third-party providers. Nexigence chooses providers and configures them to meet its commitments in the Agreement, but the providers’ own usage policies may also apply.</p>
+          <p><strong>1.3 Usage Limits.</strong> Services may be subject to usage limits, such as numbers of users, requests, call minutes, or documents, as stated in the Order Form or Documentation.</p>
+
+          <h3>2. AI Agents and Workflow Automation.</h3>
+          <p><strong>2.1 Actions in Connected Systems.</strong> AI agents can read data from and take actions in systems Customer connects, such as CRMs, ERPs, ticketing tools, and email. Customer authorizes these actions within the permissions it grants.</p>
+          <p><strong>2.2 Approvals and Permissions.</strong> Customer is responsible for deciding which actions require human approval and for granting agents only the access they need. Nexigence will provide controls to configure approvals and will log agent actions where the Service supports it.</p>
+          <p><strong>2.3 Responsibility for Actions.</strong> Actions an agent takes within the permissions and approvals Customer configured are treated as actions taken on Customer’s behalf.</p>
+
+          <h3>3. Knowledge and Retrieval Systems.</h3>
+          <p><strong>3.1 Indexing Customer Content.</strong> These Services index documents and data Customer selects so that Users can search and ask questions about them. Customer controls which sources are connected.</p>
+          <p><strong>3.2 Access Controls.</strong> Where supported, answers respect the access permissions of the connected source systems. Customer is responsible for keeping those permissions accurate.</p>
+          <p><strong>3.3 Citations and Accuracy.</strong> Answers may include citations to source content. Users should check the cited sources before relying on an answer for important decisions.</p>
+
+          <h3>4. Voice Agents.</h3>
+          <p><strong>4.1 Compliance with Calling Laws.</strong> Customer is responsible for complying with laws that apply to calls and messages made or received by voice agents, including obtaining required consents for automated or AI-generated calls, and providing call recording and AI disclosures where required.</p>
+          <p><strong>4.2 Recordings and Transcripts.</strong> Voice agents may record and transcribe calls. These recordings and transcripts are Customer Materials.</p>
+          <p><strong>4.3 Phone Numbers.</strong> Phone numbers provided through the Services are subject to the terms of the underlying telephony provider and may be reclaimed if the Service ends.</p>
+          <p><strong>4.4 No Emergency Services.</strong> Voice agents are not designed to contact or route calls to emergency services, and must not be relied on for that purpose.</p>
+
+          <h3>5. Deployments on Customer Infrastructure.</h3>
+          <p>Where Services are deployed in Customer’s own cloud or on-premises environment, Customer is responsible for the security, availability, and maintenance of that environment, and for applying updates Nexigence provides within a reasonable time. Nexigence’s service levels apply only to the parts of the Services it operates.</p>
+
+          <h3>6. Beta and Preview Features.</h3>
+          <p>Nexigence may offer features marked as beta, preview, or early access. These are provided for evaluation, may change or be withdrawn at any time, are not covered by service levels, and are provided “as is.”</p>
+
+          <h3>7. Changes to These Product Terms.</h3>
+          <p>Nexigence may update these Product Terms as Services change. Material changes that reduce Customer’s rights will not apply to a current subscription term without Customer’s agreement.</p>
+        </div>
+      </section>
+
+<!-- =====================================================================
+     SUBPROCESSORS
+     ===================================================================== -->
+      <section class="nxl-panel" role="tabpanel" data-panel="subprocessors">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Nexigence Subprocessors</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>Nexigence uses the third-party subprocessors and affiliates listed below to help provide the Services. A subprocessor is a company that may process personal data contained in Customer Materials on Nexigence’s behalf. Each is bound by written obligations to protect that data in line with our agreements with Customers.</p>
+
+          <h3>1. Current subprocessors.</h3>
+          <div class="nxl-table-wrap">
+            <table class="nxl-table">
+              <thead>
+                <tr>
+                  <th scope="col">Subprocessor</th>
+                  <th scope="col">Purpose</th>
+                  <th scope="col">Location of processing</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Nexigence AI Pvt. Ltd. (affiliate)</td>
+                  <td>Engineering, implementation, and customer support</td>
+                  <td>India</td>
+                </tr>
+                <tr>
+                  <td><span class="nxl-ph">[Cloud hosting provider]</span></td>
+                  <td>Infrastructure hosting and data storage</td>
+                  <td><span class="nxl-ph">[United States / India]</span></td>
+                </tr>
+                <tr>
+                  <td><span class="nxl-ph">[AI model provider]</span></td>
+                  <td>Large language model processing</td>
+                  <td><span class="nxl-ph">[United States]</span></td>
+                </tr>
+                <tr>
+                  <td><span class="nxl-ph">[Speech and telephony provider]</span></td>
+                  <td>Voice calls, speech-to-text, and text-to-speech for voice agents</td>
+                  <td><span class="nxl-ph">[United States]</span></td>
+                </tr>
+                <tr>
+                  <td><span class="nxl-ph">[Email delivery provider]</span></td>
+                  <td>Transactional and notification emails</td>
+                  <td><span class="nxl-ph">[United States]</span></td>
+                </tr>
+                <tr>
+                  <td><span class="nxl-ph">[Error monitoring provider]</span></td>
+                  <td>Application error tracking and performance monitoring</td>
+                  <td><span class="nxl-ph">[United States]</span></td>
+                </tr>
+                <tr>
+                  <td><span class="nxl-ph">[Support or ticketing provider]</span></td>
+                  <td>Customer support communications</td>
+                  <td><span class="nxl-ph">[United States]</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>2. Changes to subprocessors.</h3>
+          <p>Before we add or replace a subprocessor, we will update this page and, for Customers who have asked to be notified, send notice at least <span class="nxl-ph">[30]</span> days in advance. To receive notices, email <span class="nxl-ph">[privacy email address]</span>.</p>
+
+          <h3>3. Objections.</h3>
+          <p>A Customer may object to a new subprocessor on reasonable data protection grounds by emailing us within the notice period. We will work with the Customer in good faith to address the concern, for example by offering an alternative configuration. If we cannot resolve it, the Customer may terminate the affected Services as set out in its agreement with Nexigence.</p>
+        </div>
+      </section>
+
+<!-- =====================================================================
+     WEBSITE TERMS AND CONDITIONS
+     ===================================================================== -->
+      <section class="nxl-panel" role="tabpanel" data-panel="website-terms">
+        <p class="nxl-eyebrow">Nexigence AI</p>
+        <h2 class="nxl-title">Nexigence Website Terms and Conditions</h2>
+        <hr class="nxl-rule">
+        <div class="nxl-body">
+          <p class="nxl-updated">Last Updated: <span class="nxl-ph">[Month Day, Year]</span></p>
+
+          <p>These Website Terms and Conditions (“<strong>Website Terms</strong>”) govern your use of the Nexigence website and any content on it (the “<strong>Site</strong>”), operated by Nexigence AI Inc. (“<strong>Nexigence</strong>,” “<strong>we</strong>,” or “<strong>us</strong>”). By using the Site, you agree to these Website Terms. Use of our products and services is governed by separate agreements, such as the <a href="#main-services-agreement">Main Services Agreement</a> and <a href="#end-user-terms">End User Terms</a>.</p>
+
+          <h3>1. Use of the Site.</h3>
+          <p>You may browse the Site and download content for your own informational and internal business purposes. You must not use the Site in a way that breaks the law, harms the Site or other users, or attempts to gain unauthorized access to any system, and you must not scrape or copy the Site at scale without our written permission.</p>
+
+          <h3>2. Intellectual Property.</h3>
+          <p>The Site and its content, including text, graphics, logos, designs, and software, are owned by Nexigence or its licensors and are protected by intellectual property laws. Except as allowed above, you may not copy, modify, distribute, or create derivative works from them without our prior written consent. “Nexigence” and our logos are our trademarks.</p>
+
+          <h3>3. Information You Submit.</h3>
+          <p>When you submit information through the Site, for example by booking a demo or subscribing to updates, we handle it as described in our <a href="#privacy-policy">Privacy Policy</a>. You agree that any information you submit is accurate and that you have the right to share it.</p>
+
+          <h3>4. Third-Party Links.</h3>
+          <p>The Site may link to websites and services run by others. We do not control them and are not responsible for their content or practices. Visiting them is at your own risk and subject to their terms.</p>
+
+          <h3>5. Disclaimer.</h3>
+          <p>THE SITE AND ITS CONTENT ARE PROVIDED “AS IS” AND “AS AVAILABLE,” FOR GENERAL INFORMATION ONLY. TO THE MAXIMUM EXTENT PERMITTED BY LAW, NEXIGENCE MAKES NO WARRANTIES OF ANY KIND ABOUT THE SITE, INCLUDING THAT IT WILL BE ACCURATE, COMPLETE, SECURE, OR AVAILABLE WITHOUT INTERRUPTION.</p>
+
+          <h3>6. Limitation of Liability.</h3>
+          <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, NEXIGENCE WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE SITE, AND OUR TOTAL LIABILITY FOR ANY CLAIM RELATING TO THE SITE WILL NOT EXCEED <span class="nxl-ph">[US$100]</span>.</p>
+
+          <h3>7. Indemnification.</h3>
+          <p>You will indemnify and hold Nexigence harmless from any third-party claims arising from your misuse of the Site or breach of these Website Terms.</p>
+
+          <h3>8. Changes.</h3>
+          <p>We may update these Website Terms or change the Site at any time. Updated terms take effect when posted, and the date at the top of this page shows the latest version.</p>
+
+          <h3>9. Governing Law.</h3>
+          <p>These Website Terms are governed by the laws of <span class="nxl-ph">[the State of Connecticut]</span>, and the courts located in <span class="nxl-ph">[Connecticut]</span> have exclusive jurisdiction over any dispute relating to them.</p>
+
+          <h3>10. Contact Us.</h3>
+          <p>If you have questions about these Website Terms, email <span class="nxl-ph">[legal email address]</span>.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
